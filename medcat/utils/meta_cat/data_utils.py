@@ -134,7 +134,7 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
     for c in category_values:
         if c not in category_value2id:
             category_value2id[c] = len(category_value2id)
-    #print("category_values2id", category_value2id)
+    print("category_values2id", category_value2id)
 
     # Ensuring that each label has data and checking for class imbalance
 
@@ -161,11 +161,12 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
             category_value2id_[k] = len(category_value2id_)
 
         print(f"Labels found with 0 data; updates made\nFinal label encoding mapping:",category_value2id_)
+        category_value2id = category_value2id_
     # Map values to numbers
     for i in range(len(data)):
-        data[i][2] = category_value2id_[data[i][2]]
+        data[i][2] = category_value2id[data[i][2]]
 
-    return data, category_value2id_
+    return data, category_value2id
 
 def json_to_fake_spacy(data: Dict, id2text: Dict) -> Iterable:
     """Creates a generator of fake spacy documents, used for running
