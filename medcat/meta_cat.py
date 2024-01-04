@@ -65,8 +65,10 @@ class MetaCAT(PipeRunner):
             config.model['padding_idx'] = tokenizer.get_pad_id()
         self.tokenizer = tokenizer
 
+
+
         self.embeddings = torch.tensor(embeddings, dtype=torch.float32) if embeddings is not None else None
-        self.model = self.get_model(embeddings=self.embeddings)
+        #self.model = self.get_model(embeddings=self.embeddings)
 
     def get_model(self, embeddings: Optional[Tensor]) -> nn.Module:
         """Get the model
@@ -353,6 +355,10 @@ class MetaCAT(PipeRunner):
         meta_cat = cls(tokenizer=tokenizer, embeddings=None, config=config)
 
         # Load the model
+        print("Updated config is:",config)
+        print("Now loading the model...")
+
+        meta_cat.model = meta_cat.get_model(embeddings=meta_cat.embeddings)
         model_save_path = os.path.join(save_dir_path, 'model.dat')
         device = torch.device(config.general['device'])
         if not torch.cuda.is_available() and device.type == 'cuda':
