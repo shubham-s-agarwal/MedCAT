@@ -333,7 +333,7 @@ class MetaCAT(PipeRunner):
             MetaCAT:
                 The MetaCAT instance
         """
-
+        print("Load function has been called")
         # Load config
         config = cast(ConfigMetaCAT, ConfigMetaCAT.load(os.path.join(save_dir_path, 'config.json')))
         # Overwrite loaded paramters with something new
