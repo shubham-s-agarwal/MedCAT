@@ -1,0 +1,46 @@
+{
+  "general": {
+    "annotate_overlapping": false,
+    "batch_size_eval": 5000,
+    "category_name": "Status",
+    "category_value2id": {
+      "Affirmed": 0,
+      "Other": 1
+    },
+    "cntx_left": 25,
+    "cntx_right": 10,
+    "device": "cpu",
+    "disable_component_lock": false,
+    "lowercase": true,
+    "pipe_batch_size_in_chars": 20000000,
+    "replace_center": null,
+    "save_and_reuse_tokens": false,
+    "seed": 13,
+    "tokenizer_name": "bbpe",
+    "vocab_size": 30001
+  },
+  "model": {
+    "dropout": 0.5,
+    "emb_grad": true,
+    "hidden_size": 300,
+    "ignore_cpos": false,
+    "input_size": 300,
+    "model_name": "lstm",
+    "nclasses": 2,
+    "num_directions": 2,
+    "num_layers": 2,
+    "padding_idx": 30000
+  },
+  "train": {
+    "auto_save_model": true,
+    "batch_size": 100,
+    "class_weights": null,
+    "cui_filter": null,
+    "lr": 0.001,
+    "nepochs": 50,
+    "prerequisites": {},
+    "score_average": "weighted",
+    "shuffle_data": true,
+    "test_size": 0.1
+  }
+}
