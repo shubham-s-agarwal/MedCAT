@@ -321,7 +321,7 @@ class MetaCAT(PipeRunner):
         # save the class itself.
 
     @classmethod
-    def load(cls, save_dir_path: str, config_dict: Optional[Dict] = None) -> "MetaCAT":
+    def load(cls, save_dir_path: str,load_model_dict_ = False, config_dict: Optional[Dict] = None) -> "MetaCAT":
         """Load a meta_cat object.
 
         Args:
@@ -365,7 +365,9 @@ class MetaCAT(PipeRunner):
             logger.warning('Loading a MetaCAT model without GPU availability, stored config used GPU')
             config.general['device'] = 'cpu'
             device = torch.device('cpu')
-        meta_cat.model.load_state_dict(torch.load(model_save_path, map_location=device))
+
+        if load_model_dict_ == True:
+            meta_cat.model.load_state_dict(torch.load(model_save_path, map_location=device))
 
         return meta_cat
 
