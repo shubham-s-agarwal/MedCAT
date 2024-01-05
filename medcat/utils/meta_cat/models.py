@@ -151,8 +151,6 @@ class LSTM(nn.Module):
 #             attentions=outputs.attentions,
 #         )
 
-import torch
-import torch.nn as nn
 
 class BertForMetaAnnotation(nn.Module):
 
@@ -209,8 +207,12 @@ class BertForMetaAnnotation(nn.Module):
             attention_mask=attention_mask,output_hidden_states=True
         )
 
-        #print(outputs)
-        x = outputs.hidden_states[0][:,0,:] # To retrieve the [CLS] token that holds all learned context from BERT
+        #print("outputs.shape",outputs.hidden_states[0].shape)
+        #x = outputs.hidden_states[0][:,0,:] # To retrieve the [CLS] token that holds all learned context from BERT
+
+        row_indices = torch.arange(0, outputs.hidden_states[0].size(0)).long()
+        x = outputs.hidden_states[0][row_indices, center_positions, :]
+
         x = self.fc1(x)
         x = self.relu(x)
         x = self.dropout(x)
