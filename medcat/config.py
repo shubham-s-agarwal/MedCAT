@@ -115,14 +115,18 @@ class MixingConfig(FakeDict):
             config_dict(Dict): A dictionary which key/values should be added to this class.
         """
         for key in config_dict.keys():
+
             if hasattr(self, key):
+
                 attr = getattr(self, key)
             else: # TODO - log this?
                 attr = None # new attribute
             value = config_dict[key]
             if isinstance(value, BaseModel):
+
                 value = value.dict()
             if isinstance(attr, MixingConfig):
+
                 attr.merge_config(value)
             else:
                 try:

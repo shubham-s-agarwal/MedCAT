@@ -321,7 +321,7 @@ class MetaCAT(PipeRunner):
         # save the class itself.
 
     @classmethod
-    def load(cls, save_dir_path: str,load_model_dict_ = False, config_dict: Optional[Dict] = None) -> "MetaCAT":
+    def load(cls, save_dir_path: str, config_dict: Optional[Dict] = None, load_model_dict_ = False) -> "MetaCAT":
         """Load a meta_cat object.
 
         Args:
@@ -338,10 +338,11 @@ class MetaCAT(PipeRunner):
         print("Load function has been called")
         # Load config
         config = cast(ConfigMetaCAT, ConfigMetaCAT.load(os.path.join(save_dir_path, 'config.json')))
+
         # Overwrite loaded paramters with something new
         if config_dict is not None:
-            config.merge_config(config_dict)
 
+            config.merge_config(config_dict)
         tokenizer: Optional[TokenizerWrapperBase] = None
         # Load tokenizer (TODO: This should be converted into a factory or something)
         if config.general['tokenizer_name'] == 'bbpe':
