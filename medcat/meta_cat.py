@@ -85,6 +85,8 @@ class MetaCAT(PipeRunner):
         if config.model['model_name'] == 'lstm':
             from medcat.utils.meta_cat.models import LSTM
             model = LSTM(embeddings, config)
+            print("LSTM Model used for Classification")
+            print("LSTM Model successfully loaded")
         else:
             from medcat.utils.meta_cat.models import BertForMetaAnnotation
             model = BertForMetaAnnotation(config)
