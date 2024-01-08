@@ -169,6 +169,7 @@ class BertForMetaAnnotation(nn.Module):
         for param in self.bert.parameters():
             param.requires_grad = False
 
+        hidden_size_2 = int(config.model.hidden_size/2)
         # dropout layer
         self.dropout = nn.Dropout(config.model.dropout)
         # relu activation function
@@ -176,9 +177,11 @@ class BertForMetaAnnotation(nn.Module):
         # dense layer 1
         self.fc1 = nn.Linear(config.model['input_size'], config.model.hidden_size)
         # dense layer 2
-        self.fc2 = nn.Linear(config.model.hidden_size, config.model.hidden_size)
+        self.fc2 = nn.Linear(config.model.hidden_size, hidden_size_2)
+        # dense layer 3
+        self.fc3 = nn.Linear(hidden_size_2, hidden_size_2)
         # dense layer 3 (Output layer)
-        self.fc3 = nn.Linear(config.model.hidden_size, self.num_labels)
+        self.fc4 = nn.Linear(hidden_size_2, self.num_labels)
         # softmax activation function
         self.softmax = nn.LogSoftmax(dim=1)
 
@@ -212,15 +215,21 @@ class BertForMetaAnnotation(nn.Module):
 
         row_indices = torch.arange(0, outputs.hidden_states[0].size(0)).long()
         x = outputs.hidden_states[0][row_indices, center_positions, :]
-
+        #fc1
         x = self.fc1(x)
         x = self.relu(x)
         x = self.dropout(x)
-
+        # fc2
         x = self.fc2(x)
         x = self.relu(x)
-        # output layer
+        x = self.dropout(x)
+        # fc3
         x = self.fc3(x)
+        x = self.relu(x)
+        x = self.dropout(x)
+
+        # output layer
+        x = self.fc4(x)
         # apply softmax activation
-        x = self.softmax(x)
+        #x = self.softmax(x)
         return x
