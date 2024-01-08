@@ -211,10 +211,12 @@ class BertForMetaAnnotation(nn.Module):
         )
 
         #print("outputs.shape",outputs.hidden_states[0].shape)
-        #x = outputs.hidden_states[0][:,0,:] # To retrieve the [CLS] token that holds all learned context from BERT
 
         row_indices = torch.arange(0, outputs.hidden_states[0].size(0)).long()
         x = outputs.hidden_states[0][row_indices, center_positions, :]
+
+        #x = outputs.hidden_states[0][:, 0, :]  # To retrieve the [CLS] token that holds all learned context from BERT
+
         #fc1
         x = self.fc1(x)
         x = self.relu(x)
@@ -231,5 +233,5 @@ class BertForMetaAnnotation(nn.Module):
         # output layer
         x = self.fc4(x)
         # apply softmax activation
-        #x = self.softmax(x)
+        x = self.softmax(x)
         return x
