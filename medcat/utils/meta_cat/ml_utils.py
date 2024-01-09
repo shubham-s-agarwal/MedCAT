@@ -11,6 +11,7 @@ from scipy.special import softmax
 from medcat.config_meta_cat import ConfigMetaCAT
 from medcat.tokenizers_med.meta_cat_tokenizers import TokenizerWrapperBase
 from sklearn.metrics import classification_report, precision_recall_fscore_support, confusion_matrix, accuracy_score
+from transformers import AdamW, get_linear_schedule_with_warmup
 
 import logging
 
@@ -160,8 +161,30 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
     else:
         criterion = nn.CrossEntropyLoss() # Set the criterion to Cross Entropy Loss
     parameters = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = optim.Adam(parameters, lr=config.train['lr'])
-    model.to(device) # Move the model to device
+
+    def initialize_model(model,data,batch_size,lr,epochs=4):
+        """Initialize the Bert Classifier, the optimizer and the learning rate scheduler.
+        """
+
+        # Instantiate Bert Classifier
+        bert_classifier = model
+
+        # Create the optimizer
+        optimizer = AdamW(bert_classifier.parameters(),
+                          lr=lr,  # Default learning rate
+                          eps=1e-8  # Default epsilon value
+                          )
+
+        # Total number of training steps
+        total_steps = int((len(data)/batch_size) * epochs)
+        print('Total steps: {}'.format(total_steps))
+
+        # Set up the learning rate scheduler
+        scheduler = get_linear_schedule_with_warmup(optimizer,
+                                                    num_warmup_steps=0,  # Default value
+                                                    num_training_steps=total_steps)
+        return bert_classifier, optimizer, scheduler
+
 
     batch_size = config.train['batch_size']
     batch_size_eval = config.general['batch_size_eval']
@@ -170,6 +193,10 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
     ignore_cpos = config.model['ignore_cpos']
     num_batches = math.ceil(len(train_data) / batch_size)
     num_batches_test = math.ceil(len(test_data) / batch_size_eval)
+    optimizer = optim.Adam(parameters, lr=config.train['lr'])
+    model, optimizer, scheduler = initialize_model(model,train_data,batch_size,config.train['lr'],epochs=nepochs)
+
+    model.to(device)  # Move the model to device
 
     # Can be pre-calculated for the whole dataset
     y_test = [x[2] for x in test_data]
@@ -182,7 +209,6 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
         model.train()
         for i in range(num_batches):
             x, cpos, y = create_batch_piped_data(train_data, i*batch_size, (i+1)*batch_size, device=device, pad_id=pad_id)
-
             logits = model(x, center_positions=cpos)
             # print("Y",y)
             # print("Returned logits",logits)
@@ -196,6 +222,9 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
             parameters = filter(lambda p: p.requires_grad, model.parameters())
             nn.utils.clip_grad_norm_(parameters, 0.15)
             optimizer.step()
+            scheduler.step()
+            # current_lr = optimizer.param_groups[0]['lr']
+            # print(f"Epoch {epoch + 1}, Learning Rate: {current_lr}")
 
         all_logits_test = []
         running_loss_test = []

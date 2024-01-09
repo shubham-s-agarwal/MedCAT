@@ -9,7 +9,6 @@ from medcat.meta_cat import ConfigMetaCAT
 
 from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
 
-
 class LSTM(nn.Module):
     def __init__(self, embeddings: Optional[Tensor], config: ConfigMetaCAT) -> None:
         super(LSTM, self).__init__()
@@ -160,7 +159,7 @@ class BertForMetaAnnotation(nn.Module):
         super(BertForMetaAnnotation, self).__init__()
 
         bert = AutoModelForSequenceClassification.from_pretrained(
-            "distilbert-base-uncased", num_labels= config.model["nclasses"]
+            "bert-base-uncased", num_labels= config.model["nclasses"]
         )
 
         self.bert = bert
@@ -210,13 +209,9 @@ class BertForMetaAnnotation(nn.Module):
             attention_mask=attention_mask,output_hidden_states=True
         )
 
-        #print("outputs.shape",outputs.hidden_states[0].shape)
-
         row_indices = torch.arange(0, outputs.hidden_states[0].size(0)).long()
         x = outputs.hidden_states[0][row_indices, center_positions, :]
-
         #x = outputs.hidden_states[0][:, 0, :]  # To retrieve the [CLS] token that holds all learned context from BERT
-
         #fc1
         x = self.fc1(x)
         x = self.relu(x)
@@ -225,10 +220,10 @@ class BertForMetaAnnotation(nn.Module):
         x = self.fc2(x)
         x = self.relu(x)
         x = self.dropout(x)
-        # fc3
-        x = self.fc3(x)
-        x = self.relu(x)
-        x = self.dropout(x)
+        # # fc3
+        # x = self.fc3(x)
+        # x = self.relu(x)
+        # x = self.dropout(x)
 
         # output layer
         x = self.fc4(x)
