@@ -225,8 +225,9 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
             parameters = filter(lambda p: p.requires_grad, model.parameters())
             nn.utils.clip_grad_norm_(parameters, 0.15)
             optimizer.step()
-            if model_arch_config['lr_scheduler'] is True:
-                scheduler.step()
+            if model_arch_config is not None:
+                if model_arch_config['lr_scheduler'] is True:
+                    scheduler.step()
             # current_lr = optimizer.param_groups[0]['lr']
             # print(f"Epoch {epoch + 1}, Learning Rate: {current_lr}")
 
