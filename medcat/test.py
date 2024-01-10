@@ -3,6 +3,8 @@ import json
 from medcat.meta_cat import MetaCAT
 from medcat.preprocessing.tokenizers import TokenizerWrapperBPE, TokenizerWrapperBERT
 from tokenizers import ByteLevelBPETokenizer
+from sklearn.metrics import ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 DATA_DIR = "MedCAT/data/"
 
@@ -44,3 +46,15 @@ model_arch_config = {'fc2': True, 'fc3': False,'lr_scheduler': False}
 #Training the MetaCAT model
 winner_report = mc.train(json_path= './Data/MedCAT_Export.json', save_dir_path='status_2',model_arch_config=model_arch_config)
 print("\n\nWinner Report:",winner_report)
+
+# print("PRINTING CONFUSION MATRIX FOR TRAIN DATASET")
+# cm = confusion_matrix(y_train, np.argmax(np.concatenate(all_logits, axis=0), axis=1))
+# disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels={'Other': 0, 'Confirmed': 1})
+# disp.plot()
+# plt.show()
+
+print("\n**************\nPRINTING CONFUSION MATRIX FOR TEST DATASET")
+cm = winner_report['confusion_matrix']
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels={'Other': 0, 'Confirmed': 1})
+disp.plot()
+plt.show()

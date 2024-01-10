@@ -8,9 +8,10 @@ import torch.optim as optim
 from typing import List, Optional, Tuple, Any, Dict
 from torch import nn
 from scipy.special import softmax
+import matplotlib.pyplot as plt
 from medcat.config_meta_cat import ConfigMetaCAT
 from medcat.tokenizers_med.meta_cat_tokenizers import TokenizerWrapperBase
-from sklearn.metrics import classification_report, precision_recall_fscore_support, confusion_matrix, accuracy_score
+from sklearn.metrics import classification_report, precision_recall_fscore_support, confusion_matrix, accuracy_score,ConfusionMatrixDisplay
 from transformers import AdamW, get_linear_schedule_with_warmup
 
 import logging
@@ -247,10 +248,13 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
         print_report(epoch, running_loss_test, all_logits_test, y=y_test, name='Test')
 
         _report = classification_report(y_test, np.argmax(np.concatenate(all_logits_test, axis=0), axis=1), output_dict=True)
+
         if not winner_report or _report[config.train['metric']['base']][config.train['metric']['score']] > \
                 winner_report['report'][config.train['metric']['base']][config.train['metric']['score']]:
 
             report = classification_report(y_test, np.argmax(np.concatenate(all_logits_test, axis=0), axis=1), output_dict=True)
+            cm = confusion_matrix(y_test, np.argmax(np.concatenate(all_logits_test, axis=0), axis=1),normalize='true')
+            winner_report['confusion_matrix'] = cm
             winner_report['report'] = report
             winner_report['epoch'] = epoch
 
