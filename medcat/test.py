@@ -39,6 +39,8 @@ mc.config.model['dropout'] = 0.35
 
 mc.config.model['num_layers'] = 1
 
+model_arch_config = {'fc2': True, 'fc3': False,'lr_scheduler': False}
+
 #Training the MetaCAT model
-winner_report = mc.train(json_path= './Data/MedCAT_Export.json', save_dir_path='status_2')
+winner_report = mc.train(json_path= './Data/MedCAT_Export.json', save_dir_path='status_2',model_arch_config=model_arch_config)
 print("\n\nWinner Report:",winner_report)

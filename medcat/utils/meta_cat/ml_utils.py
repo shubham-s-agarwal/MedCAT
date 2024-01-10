@@ -142,7 +142,7 @@ def print_report(epoch: int, running_loss: List, all_logits: List, y: Any, name:
         print(accuracy_score(y, np.argmax(np.concatenate(all_logits, axis=0), axis=1)))
 
 
-def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_path: Optional[str] = None) -> Dict:
+def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_path: Optional[str] = None,model_arch_config=None) -> Dict:
     """Trains a LSTM model (for now) with autocheckpoints
 
     Args:
@@ -194,7 +194,9 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
     num_batches = math.ceil(len(train_data) / batch_size)
     num_batches_test = math.ceil(len(test_data) / batch_size_eval)
     optimizer = optim.Adam(parameters, lr=config.train['lr'])
-    model, optimizer, scheduler = initialize_model(model,train_data,batch_size,config.train['lr'],epochs=nepochs)
+
+    if model_arch_config['lr_scheduler'] is True:
+        model, optimizer, scheduler = initialize_model(model,train_data,batch_size,config.train['lr'],epochs=nepochs)
 
     model.to(device)  # Move the model to device
 
@@ -209,7 +211,7 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
         model.train()
         for i in range(num_batches):
             x, cpos, y = create_batch_piped_data(train_data, i*batch_size, (i+1)*batch_size, device=device, pad_id=pad_id)
-            logits = model(x, center_positions=cpos)
+            logits = model(x, center_positions=cpos,model_arch_config=model_arch_config)
             # print("Y",y)
             # print("Returned logits",logits)
 
@@ -222,7 +224,8 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
             parameters = filter(lambda p: p.requires_grad, model.parameters())
             nn.utils.clip_grad_norm_(parameters, 0.15)
             optimizer.step()
-            scheduler.step()
+            if model_arch_config['lr_scheduler'] is True:
+                scheduler.step()
             # current_lr = optimizer.param_groups[0]['lr']
             # print(f"Epoch {epoch + 1}, Learning Rate: {current_lr}")
 
@@ -234,7 +237,7 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
             for i in range(num_batches_test):
                 x, cpos, y = create_batch_piped_data(test_data, i*batch_size_eval, (i+1)*batch_size_eval, device=device, pad_id=pad_id)
 
-                logits = model(x, center_positions=cpos)
+                logits = model(x, center_positions=cpos,model_arch_config=model_arch_config)
 
                 # Track loss and logits
                 running_loss_test.append(loss.item())

@@ -70,7 +70,7 @@ class MetaCAT(PipeRunner):
         self.embeddings = torch.tensor(embeddings, dtype=torch.float32) if embeddings is not None else None
         #self.model = self.get_model(embeddings=self.embeddings)
 
-    def get_model(self, embeddings: Optional[Tensor]) -> nn.Module:
+    def get_model(self, embeddings: Optional[Tensor],model_arch_config=None) -> nn.Module:
         """Get the model
 
         Args:
@@ -89,7 +89,8 @@ class MetaCAT(PipeRunner):
             print("LSTM Model successfully loaded")
         else:
             from medcat.utils.meta_cat.models import BertForMetaAnnotation
-            model = BertForMetaAnnotation(config)
+
+            model = BertForMetaAnnotation(config,model_arch_config)
             print("Bert Model used for Classification")
             print("Bert Model successfully loaded")
             #raise ValueError("Unknown model name %s" % config.model['model_name'])
@@ -107,7 +108,7 @@ class MetaCAT(PipeRunner):
         return hasher.hexdigest()
 
     @deprecated(message="Use `train_from_json` or `train_raw` instead")
-    def train(self, json_path: Union[str, list], save_dir_path: Optional[str] = None) -> Dict:
+    def train(self, json_path: Union[str, list], model_arch_config=None , save_dir_path: Optional[str] = None) -> Dict:
         """Train or continue training a model give a json_path containing a MedCATtrainer export. It will
         continue training if an existing model is loaded or start new training if the model is blank/new.
 
@@ -118,9 +119,9 @@ class MetaCAT(PipeRunner):
                 In case we have aut_save_model (meaning during the training the best model will be saved)
                 we need to set a save path. Defaults to `None`.
         """
-        return self.train_from_json(json_path, save_dir_path)
+        return self.train_from_json(json_path,model_arch_config, save_dir_path)
 
-    def train_from_json(self, json_path: Union[str, list], save_dir_path: Optional[str] = None) -> Dict:
+    def train_from_json(self, json_path: Union[str, list],model_arch_config = None,  save_dir_path: Optional[str] = None) -> Dict:
         """Train or continue training a model give a json_path containing a MedCATtrainer export. It will
         continue training if an existing model is loaded or start new training if the model is blank/new.
 
@@ -151,9 +152,9 @@ class MetaCAT(PipeRunner):
         for path in json_path:
             with open(path, 'r') as f:
                 data_loaded = merge_data_loaded(data_loaded, json.load(f))
-        return self.train_raw(data_loaded, save_dir_path)
+        return self.train_raw(data_loaded, model_arch_config,save_dir_path)
 
-    def train_raw(self, data_loaded: Dict, save_dir_path: Optional[str] = None) -> Dict:
+    def train_raw(self, data_loaded: Dict, model_arch_config=None, save_dir_path: Optional[str] = None) -> Dict:
         """Train or continue training a model given raw data. It will
         continue training if an existing model is loaded or start new training if the model is blank/new.
 
@@ -225,12 +226,12 @@ class MetaCAT(PipeRunner):
         #             self.config.model['nclasses'], len(category_value2id)))
         #     logger.warning("Auto-setting the nclasses value in config and rebuilding the model.")
         #     self.config.model['nclasses'] = len(category_value2id)
-        self.model = self.get_model(embeddings=self.embeddings)
+        self.model = self.get_model(embeddings=self.embeddings,model_arch_config=model_arch_config)
         print("\nData successfully loaded!")
         print("\nModel successfully retrieved!")
 
         print("Model sent for training!")
-        report = train_model(self.model, data=data, config=self.config, save_dir_path=save_dir_path)
+        report = train_model(self.model, data=data, config=self.config, save_dir_path=save_dir_path,model_arch_config=model_arch_config)
 
         # If autosave, then load the best model here
         if t_config['auto_save_model']:
