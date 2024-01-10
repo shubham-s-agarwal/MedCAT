@@ -181,10 +181,13 @@ class BertForMetaAnnotation(nn.Module):
         # dense layer 3
         self.fc3 = nn.Linear(hidden_size_2, hidden_size_2)
         # dense layer 3 (Output layer)
-        if model_arch_config['fc2'] is True or model_arch_config['fc3'] is True:
-            self.fc4 = nn.Linear(hidden_size_2, self.num_labels)
+        if model_arch_config is not None:
+            if model_arch_config['fc2'] is True or model_arch_config['fc3'] is True:
+                self.fc4 = nn.Linear(hidden_size_2, self.num_labels)
+            else:
+                self.fc4 = nn.Linear(config.model.hidden_size, self.num_labels)
         else:
-            self.fc4 = nn.Linear(config.model.hidden_size, self.num_labels)
+            self.fc4 = nn.Linear(hidden_size_2, self.num_labels)
         # softmax activation function
         self.softmax = nn.LogSoftmax(dim=1)
 
@@ -221,13 +224,26 @@ class BertForMetaAnnotation(nn.Module):
         x = self.fc1(x)
         x = self.relu(x)
         x = self.dropout(x)
-        # fc2
-        if model_arch_config['fc2'] is True:
+
+        if model_arch_config is not None:
+            if model_arch_config['fc2'] is True:
+                # fc2
+                x = self.fc2(x)
+                x = self.relu(x)
+                x = self.dropout(x)
+
+            if model_arch_config['fc3'] is True:
+                # fc3
+                x = self.fc3(x)
+                x = self.relu(x)
+                x = self.dropout(x)
+        else:
+            # fc2
             x = self.fc2(x)
             x = self.relu(x)
             x = self.dropout(x)
-        # fc3
-        if model_arch_config['fc3'] is True:
+
+            #fc3
             x = self.fc3(x)
             x = self.relu(x)
             x = self.dropout(x)
