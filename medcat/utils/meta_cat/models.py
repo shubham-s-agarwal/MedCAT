@@ -39,7 +39,7 @@ class LSTM(nn.Module):
                 input_ids: torch.LongTensor,
                 center_positions: Tensor,
                 attention_mask: Optional[torch.FloatTensor] = None,
-                ignore_cpos: bool = False) -> Tensor:
+                ignore_cpos: bool = False,model_arch_config=None) -> Tensor:
         x = input_ids
         # Get the mask from x
         if attention_mask is None:

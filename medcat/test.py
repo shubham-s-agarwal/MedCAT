@@ -11,8 +11,8 @@ DATA_DIR = "MedCAT/data/"
 model_ = 'lstm'
 tokenizer_ = 'bbpe'
 
-model_ = 'bert'
-tokenizer_ = 'bert-tokenizer'
+# model_ = 'bert'
+# tokenizer_ = 'bert-tokenizer'
 
 data = json.load(open('./Data/MedCAT_Export.json'))
 mc_config = json.load(open('./Data/status/config.json'))
