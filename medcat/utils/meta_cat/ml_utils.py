@@ -14,7 +14,6 @@ from medcat.tokenizers_med.meta_cat_tokenizers import TokenizerWrapperBase
 from sklearn.metrics import classification_report, precision_recall_fscore_support,f1_score, confusion_matrix, accuracy_score,ConfusionMatrixDisplay
 from transformers import AdamW, get_linear_schedule_with_warmup
 from sklearn.utils import class_weight
-from sadice import SelfAdjDiceLoss
 # from medcat.utils.meta_cat.meta_cat_loss import DiceLoss,FocalLoss
 
 import logging
