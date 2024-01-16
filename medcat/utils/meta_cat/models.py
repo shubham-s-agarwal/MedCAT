@@ -167,7 +167,7 @@ class BertForMetaAnnotation(nn.Module):
         print("Nclasses:",self.num_labels)
         print("Architecture config received",model_arch_config)
         for param in self.bert.parameters():
-            param.requires_grad = False
+            param.requires_grad = not(config.model.model_freeze_layers)
 
         hidden_size_2 = int(config.model.hidden_size/2)
         # dropout layer

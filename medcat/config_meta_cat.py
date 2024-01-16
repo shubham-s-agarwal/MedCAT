@@ -48,6 +48,7 @@ class Model(MixingConfig, BaseModel):
     model_name: str = 'bert'
     model_variant: str = ''
     #model_name: str = 'lstm'
+    model_freeze_layers: bool = True
     num_layers: int = 2
     input_size: int = 300
     hidden_size: int = 300
@@ -87,6 +88,8 @@ class Train(MixingConfig, BaseModel):
     """When was the last training run"""
     metric: Dict[str, str] = {'base': 'weighted avg', 'score': 'f1-score'}
     """What metric should be used for choosing the best model"""
+    gamma: int = 2
+    """How much the loss focuses on hard-to-classify examples."""
 
     class Config:
         extra = Extra.allow

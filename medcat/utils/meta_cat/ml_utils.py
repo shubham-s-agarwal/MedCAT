@@ -11,11 +11,13 @@ from scipy.special import softmax
 import matplotlib.pyplot as plt
 from medcat.config_meta_cat import ConfigMetaCAT
 from medcat.tokenizers_med.meta_cat_tokenizers import TokenizerWrapperBase
-from sklearn.metrics import classification_report, precision_recall_fscore_support, confusion_matrix, accuracy_score,ConfusionMatrixDisplay
+from sklearn.metrics import classification_report, precision_recall_fscore_support,f1_score, confusion_matrix, accuracy_score,ConfusionMatrixDisplay
 from transformers import AdamW, get_linear_schedule_with_warmup
+from sklearn.utils import class_weight
+from sadice import SelfAdjDiceLoss
+# from medcat.utils.meta_cat.meta_cat_loss import DiceLoss,FocalLoss
 
 import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -140,8 +142,55 @@ def print_report(epoch: int, running_loss: List, all_logits: List, y: Any, name:
         logger.info('Epoch: %d %s %s', epoch, "*"*50, name)
         #logger.info(classification_report(y, np.argmax(np.concatenate(all_logits, axis=0), axis=1)))
         print('Epoch: ', epoch,name)
-        print(accuracy_score(y, np.argmax(np.concatenate(all_logits, axis=0), axis=1)))
+        print("Accuracy: ",accuracy_score(y, np.argmax(np.concatenate(all_logits, axis=0), axis=1)))
+        print("F1-score: ",f1_score(y, np.argmax(np.concatenate(all_logits, axis=0), axis=1),average='macro'))
 
+
+#
+# def multi_class_recall_specificity(y_true, y_pred, recall_weight, spec_weight):
+#     print("y_pred",y_pred)
+#     _report = classification_report(y_true, y_pred,
+#                                     output_dict=True)
+#     cnf_matrix = confusion_matrix(y_true, y_pred)
+#     FP = cnf_matrix.sum(axis=0) - np.diag(cnf_matrix)
+#     FN = cnf_matrix.sum(axis=1) - np.diag(cnf_matrix)
+#     TP = np.diag(cnf_matrix)
+#     TN = cnf_matrix.sum() - (FP + FN + TP)
+#
+#     FP = FP.astype(float)
+#     # FN = FN.astype(float)
+#     # TP = TP.astype(float)
+#     TN = TN.astype(float)
+#
+#     specificity = TN / (TN + FP)
+#
+#     # Calculate the final loss
+#     loss = 1.0 - (recall_weight * _report['macro avg']['recall'] + spec_weight * specificity)
+#
+#     return loss.item()  # Return as a Python float
+#
+# def custom_loss(recall_weight, spec_weight):
+#     def recall_spec_loss(y_true, y_pred):
+#         return multi_class_recall_specificity(y_true, y_pred, recall_weight, spec_weight)
+#
+#     # Returns the (y_true, y_pred) loss function
+#     return recall_spec_loss
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=None, gamma=2):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+
+    def forward(self, inputs, targets):
+        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+        pt = torch.exp(-ce_loss)
+        loss = (self.alpha[targets] * (1 - pt) ** self.gamma * ce_loss).mean()
+        return loss
 
 def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_path: Optional[str] = None,model_arch_config=None) -> Dict:
     """Trains a LSTM model (for now) with autocheckpoints
@@ -156,11 +205,21 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
     device = torch.device(config.general['device']) # Create a torch device
 
     class_weights = config.train['class_weights']
+
     if class_weights is not None:
         class_weights = torch.FloatTensor(class_weights).to(device)
         criterion = nn.CrossEntropyLoss(weight=class_weights) # Set the criterion to Cross Entropy Loss
+        criterion = FocalLoss(alpha=class_weights, gamma=config.train['gamma'])
     else:
         criterion = nn.CrossEntropyLoss() # Set the criterion to Cross Entropy Loss
+
+        # criterion = SelfAdjDiceLoss()
+        # criterion = DiceLoss(with_logits=True, smooth=1, ohem_ratio=0,
+        #                         alpha=0.01,
+        #                         index_label_position=True, reduction="mean")
+
+        # criterion = FocalLoss(gamma=4, reduction="mean")
+
     parameters = filter(lambda p: p.requires_grad, model.parameters())
 
     def initialize_model(model,data,batch_size,lr,epochs=4):
