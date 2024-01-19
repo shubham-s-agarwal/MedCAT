@@ -207,10 +207,16 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
 
     if class_weights is not None:
         class_weights = torch.FloatTensor(class_weights).to(device)
-        criterion = nn.CrossEntropyLoss(weight=class_weights) # Set the criterion to Cross Entropy Loss
-        criterion = FocalLoss(alpha=class_weights, gamma=config.train['gamma'])
+        if config.train['loss_funct'] == 'cross_entropy':
+            criterion = nn.CrossEntropyLoss(weight=class_weights) # Set the criterion to Cross Entropy Loss
+        elif config.train['loss_funct'] == 'focal_loss':
+            criterion = FocalLoss(alpha=class_weights, gamma=config.train['gamma'])
+        # criterion = nn.BCEWithLogitsLoss()
     else:
-        criterion = nn.CrossEntropyLoss() # Set the criterion to Cross Entropy Loss
+        if config.train['loss_funct'] == 'cross_entropy':
+            criterion = nn.CrossEntropyLoss()  # Set the criterion to Cross Entropy Loss
+        elif config.train['loss_funct'] == 'focal_loss':
+            criterion = FocalLoss(gamma=config.train['gamma'])
 
         # criterion = SelfAdjDiceLoss()
         # criterion = DiceLoss(with_logits=True, smooth=1, ohem_ratio=0,
@@ -253,9 +259,9 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
     num_batches = math.ceil(len(train_data) / batch_size)
     num_batches_test = math.ceil(len(test_data) / batch_size_eval)
     optimizer = optim.Adam(parameters, lr=config.train['lr'])
-
-    if model_arch_config['lr_scheduler'] is True:
-        model, optimizer, scheduler = initialize_model(model,train_data,batch_size,config.train['lr'],epochs=nepochs)
+    if model_arch_config is not None:
+        if model_arch_config['lr_scheduler'] is True:
+            model, optimizer, scheduler = initialize_model(model,train_data,batch_size,config.train['lr'],epochs=nepochs)
 
     model.to(device)  # Move the model to device
 
@@ -272,7 +278,6 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
             x, cpos, y = create_batch_piped_data(train_data, i*batch_size, (i+1)*batch_size, device=device, pad_id=pad_id)
             logits = model(x, center_positions=cpos,model_arch_config=model_arch_config)
             # print("Y",y)
-            # print("Returned logits",logits)
 
             loss = criterion(logits, y)
             loss.backward()

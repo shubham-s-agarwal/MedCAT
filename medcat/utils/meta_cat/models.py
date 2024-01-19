@@ -7,7 +7,7 @@ from transformers import BertPreTrainedModel, BertModel, BertConfig
 from transformers.modeling_outputs import TokenClassifierOutput
 from medcat.meta_cat import ConfigMetaCAT
 
-from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
+from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer,BertForSequenceClassification
 
 class LSTM(nn.Module):
     def __init__(self, embeddings: Optional[Tensor], config: ConfigMetaCAT) -> None:
@@ -158,9 +158,12 @@ class BertForMetaAnnotation(nn.Module):
     def __init__(self,config,model_arch_config):
         super(BertForMetaAnnotation, self).__init__()
 
-        bert = AutoModelForSequenceClassification.from_pretrained(
+        _bertconfig = BertConfig(num_hidden_layers=config.model['num_layers'])
+
+        bert = BertForSequenceClassification.from_pretrained(
             "bert-base-uncased", num_labels= config.model["nclasses"]
         )
+        bert = BertModel.from_pretrained("bert-base-uncased", config=_bertconfig)
 
         self.bert = bert
         self.num_labels = config.model["nclasses"]
@@ -216,14 +219,19 @@ class BertForMetaAnnotation(nn.Module):
             input_ids,
             attention_mask=attention_mask,output_hidden_states=True
         )
+        # print("outputs last hidden state",outputs.last_hidden_state.shape)
 
-        row_indices = torch.arange(0, outputs.hidden_states[0].size(0)).long()
-        x = outputs.hidden_states[0][row_indices, center_positions, :]
-        #x = outputs.hidden_states[0][:, 0, :]  # To retrieve the [CLS] token that holds all learned context from BERT
+        # row_indices = torch.arange(0, outputs.hidden_states[0].size(0)).long()
+        row_indices = torch.arange(0, outputs.last_hidden_state.size(0)).long()
+
+        x = outputs.last_hidden_state[row_indices, center_positions, :]
+
+        # x = outputs.hidden_states[0][:, 0, :]  # To retrieve the [CLS] token that holds all learned context from BERT
+        # x = outputs.last_hidden_state[:, 0, :]
         #fc1
+        x = self.dropout(x)
         x = self.fc1(x)
         x = self.relu(x)
-        x = self.dropout(x)
 
         if model_arch_config is not None:
             if model_arch_config['fc2'] is True:
@@ -251,5 +259,5 @@ class BertForMetaAnnotation(nn.Module):
         # output layer
         x = self.fc4(x)
         # apply softmax activation
-        x = self.softmax(x)
+        # x = self.softmax(x)
         return x

@@ -68,11 +68,13 @@ def prepare_from_json(data: Dict,
                             # Get the index of the center token
                             ind = 0
                             for ind, pair in enumerate(doc_text['offset_mapping']):
+
                                 if start >= pair[0] and start < pair[1]:
                                     break
 
                             _start = max(0, ind - cntx_left)
                             _end = min(len(doc_text['input_ids']), ind + 1 + cntx_right)
+
                             tkns = doc_text['input_ids'][_start:_end]
                             cpos = cntx_left + min(0, ind-cntx_left)
 
@@ -119,7 +121,7 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
 
     Returns:
         dict:
-            New data with integeres inplace of strings for categry values.
+            New data with integers inplace of strings for categry values.
         dict:
             Map rom category value to ID for all categories in the data.
     """
@@ -131,17 +133,21 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
 
     category_values = set([x[2] for x in data])
 
-    for c in category_values:
-        if c not in category_value2id:
-            category_value2id[c] = len(category_value2id)
+    # for c in category_values:
+    #     if c not in category_value2id:
+    #         category_value2id[c] = len(category_value2id)
     print("category_values2id", category_value2id)
 
     # Ensuring that each label has data and checking for class imbalance
 
     label_data = {key: 0 for key in category_value2id}
     for i in range(len(data)):
-        label_data[data[i][2]] = label_data[data[i][2]] + 1
-    print(label_data)
+        # print("data[i][2]",data[i][2])
+        # print("category_values2id", category_value2id)
+        if data[i][2] in category_value2id:
+            label_data[data[i][2]] = label_data[data[i][2]] + 1
+    print("label_data",label_data)
+
     # if 0 in label_data.values():
     #
     #     # This means one or more labels have no data; removing the label(s)
@@ -163,10 +169,13 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
         print(f"Labels found with 0 data; updates made\nFinal label encoding mapping:",category_value2id_)
         category_value2id = category_value2id_
     # Map values to numbers
+    data_2 = []
     for i in range(len(data)):
-        data[i][2] = category_value2id[data[i][2]]
+        if data[i][2] in category_value2id:
+            data[i][2] = category_value2id[data[i][2]]
+            data_2.append(data[i])
 
-    return data, category_value2id
+    return data_2, category_value2id
 
 def json_to_fake_spacy(data: Dict, id2text: Dict) -> Iterable:
     """Creates a generator of fake spacy documents, used for running

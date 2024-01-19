@@ -88,6 +88,8 @@ class Train(MixingConfig, BaseModel):
     """When was the last training run"""
     metric: Dict[str, str] = {'base': 'weighted avg', 'score': 'f1-score'}
     """What metric should be used for choosing the best model"""
+    loss_funct: str = 'cross_entropy'
+    """Loss function for the model"""
     gamma: int = 2
     """How much the loss focuses on hard-to-classify examples."""
 
