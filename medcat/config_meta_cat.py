@@ -46,13 +46,15 @@ class General(MixingConfig, BaseModel):
 class Model(MixingConfig, BaseModel):
     """The model part of the metaCAT config"""
     model_name: str = 'bert'
-    model_variant: str = ''
+    model_variant: str = 'bert-base-uncased'
     #model_name: str = 'lstm'
     model_freeze_layers: bool = True
     num_layers: int = 2
     input_size: int = 300
     hidden_size: int = 300
     dropout: float = 0.5
+    load_model_dict_ = True
+    fine_tune_two_phase = False
     num_directions: int = 2
     """2 - bidirectional model, 1 - unidirectional"""
     nclasses: int = 2

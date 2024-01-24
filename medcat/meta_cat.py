@@ -65,12 +65,10 @@ class MetaCAT(PipeRunner):
             config.model['padding_idx'] = tokenizer.get_pad_id()
         self.tokenizer = tokenizer
 
-
-
         self.embeddings = torch.tensor(embeddings, dtype=torch.float32) if embeddings is not None else None
         #self.model = self.get_model(embeddings=self.embeddings)
 
-    def get_model(self, embeddings: Optional[Tensor],model_arch_config=None) -> nn.Module:
+    def get_model(self, embeddings: Optional[Tensor],_model = None,model_arch_config=None,load_two_phase=False) -> nn.Module:
         """Get the model
 
         Args:
@@ -85,14 +83,20 @@ class MetaCAT(PipeRunner):
         if config.model['model_name'] == 'lstm':
             from medcat.utils.meta_cat.models import LSTM
             model = LSTM(embeddings, config)
-            print("LSTM Model used for Classification")
-            print("LSTM Model successfully loaded")
+            print("****************LSTM Model used for Classification****************")
+            print("****************LSTM Model successfully loaded****************")
+        elif load_two_phase:
+            from medcat.utils.meta_cat.models import BertForMetaAnnotation_two_phase
+
+            model = BertForMetaAnnotation_two_phase(config,_model)
+            print("****************Bert Model v2 used for Classification****************")
+            print("****************Bert Model v2 successfully loaded****************")
+
         else:
             from medcat.utils.meta_cat.models import BertForMetaAnnotation
-
             model = BertForMetaAnnotation(config,model_arch_config)
-            print("Bert Model used for Classification")
-            print("Bert Model successfully loaded")
+            print("****************Bert Model used for Classification****************")
+            print("****************Bert Model successfully loaded****************")
             #raise ValueError("Unknown model name %s" % config.model['model_name'])
 
         return model
@@ -217,7 +221,7 @@ class MetaCAT(PipeRunner):
             g_config['category_value2id'] = category_value2id
         else:
             # We already have everything, just get the data
-            data, _ = encode_category_values(data, existing_category_value2id=category_value2id)
+            data, full_data, _ = encode_category_values(data, existing_category_value2id=category_value2id)
 
         # Make sure the config number of classes is the same as the one found in the data
         # if len(category_value2id) != self.config.model['nclasses']:
@@ -226,14 +230,25 @@ class MetaCAT(PipeRunner):
         #             self.config.model['nclasses'], len(category_value2id)))
         #     logger.warning("Auto-setting the nclasses value in config and rebuilding the model.")
         #     self.config.model['nclasses'] = len(category_value2id)
-
-        if return_data == True:
-            return data
-        self.model = self.get_model(embeddings=self.embeddings,model_arch_config=model_arch_config)
         print("\nData successfully loaded!")
+        if return_data:
+            return full_data
+
+        self.model = self.get_model(embeddings=self.embeddings,model_arch_config=model_arch_config)
+        # self.config.model.load_model_dict_ = True
+        if self.config.model.load_model_dict_:
+            model_save_path = os.path.join(save_dir_path, 'model.dat')
+            state_dict_ = torch.load(model_save_path)
+            self.model.load_state_dict(state_dict_)
+            print("Model state loaded from dict!")
+            data = full_data
+
+            if self.config.model.fine_tune_two_phase:
+                self.model = self.get_model(embeddings=self.embeddings, _model=self.model, model_arch_config=model_arch_config,load_two_phase=self.config.model.fine_tune_two_phase)
+
         print("\nModel successfully retrieved!")
 
-        print("Model sent for training!")
+        print(f"Model sent for training with {len(data)} data samples!")
         report = train_model(self.model, data=data, config=self.config, save_dir_path=save_dir_path,model_arch_config=model_arch_config)
 
         # If autosave, then load the best model here
@@ -317,7 +332,7 @@ class MetaCAT(PipeRunner):
         self.tokenizer.save(save_dir_path)
 
         # Save config
-        self.config.save(os.path.join(save_dir_path, 'config.json'))
+        # self.config.save(os.path.join(save_dir_path, 'config.json'))
 
         # Save the model
         model_save_path = os.path.join(save_dir_path, 'model.dat')
@@ -356,6 +371,7 @@ class MetaCAT(PipeRunner):
             tokenizer = TokenizerWrapperBPE.load(save_dir_path)
         elif config.general['tokenizer_name'] == 'bert-tokenizer':
             from medcat.tokenizers_med.meta_cat_tokenizers import TokenizerWrapperBERT
+            # config.model['model_variant'] = 'bert-base-uncased'
             tokenizer = TokenizerWrapperBERT.load(save_dir_path,config.model['model_variant'])
 
         # Create meta_cat
@@ -363,18 +379,15 @@ class MetaCAT(PipeRunner):
 
         # Load the model
         print("Updated config is:",config)
-        print("Now loading the model...")
-
-        meta_cat.model = meta_cat.get_model(embeddings=meta_cat.embeddings)
-        model_save_path = os.path.join(save_dir_path, 'model.dat')
-        device = torch.device(config.general['device'])
-        if not torch.cuda.is_available() and device.type == 'cuda':
-            logger.warning('Loading a MetaCAT model without GPU availability, stored config used GPU')
-            config.general['device'] = 'cpu'
-            device = torch.device('cpu')
-
-        if load_model_dict_ == True:
-            meta_cat.model.load_state_dict(torch.load(model_save_path, map_location=device))
+        # print("Now loading the model...")
+        #
+        # meta_cat.model = meta_cat.get_model(embeddings=meta_cat.embeddings)
+        #
+        # device = torch.device(config.general['device'])
+        # if not torch.cuda.is_available() and device.type == 'cuda':
+        #     logger.warning('Loading a MetaCAT model without GPU availability, stored config used GPU')
+        #     config.general['device'] = 'cpu'
+        #     device = torch.device('cpu')
 
         return meta_cat
 

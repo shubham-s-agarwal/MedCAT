@@ -190,7 +190,6 @@ class TokenizerWrapperBERT(TokenizerWrapperBase):
             tokenizer.hf_tokenizers = BertTokenizerFast.from_pretrained(path, **kwargs)
         except:
             from transformers import AutoTokenizer
-
             tokenizer.hf_tokenizers = BertTokenizerFast.from_pretrained(model_variant)
 
         return tokenizer

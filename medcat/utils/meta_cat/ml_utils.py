@@ -278,8 +278,8 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
             x, cpos, y = create_batch_piped_data(train_data, i*batch_size, (i+1)*batch_size, device=device, pad_id=pad_id)
             logits = model(x, center_positions=cpos,model_arch_config=model_arch_config)
             # print("Y",y)
-
             loss = criterion(logits, y)
+
             loss.backward()
             # Track loss and logits
             running_loss.append(loss.item())

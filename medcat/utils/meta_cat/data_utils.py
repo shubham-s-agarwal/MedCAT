@@ -68,13 +68,11 @@ def prepare_from_json(data: Dict,
                             # Get the index of the center token
                             ind = 0
                             for ind, pair in enumerate(doc_text['offset_mapping']):
-
                                 if start >= pair[0] and start < pair[1]:
                                     break
 
                             _start = max(0, ind - cntx_left)
                             _end = min(len(doc_text['input_ids']), ind + 1 + cntx_right)
-
                             tkns = doc_text['input_ids'][_start:_end]
                             cpos = cntx_left + min(0, ind-cntx_left)
 
@@ -175,7 +173,24 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
             data[i][2] = category_value2id[data[i][2]]
             data_2.append(data[i])
 
-    return data_2, category_value2id
+
+    min_lab_data = min(label_data.values())
+    data_3 = []
+    label_data_counter = {v: 0 for v in category_value2id.values()}
+
+    for sample in data_2:
+        if label_data_counter[sample[-1]]<min_lab_data:
+            data_3.append(sample)
+            label_data_counter[sample[-1]]+=1
+
+    label_data = {v: 0 for v in category_value2id.values()}
+    for i in range(len(data_3)):
+        # print("data[i][2]",data_3[i][2])
+        # print("category_values2id", category_value2id)
+        if data_3[i][2] in category_value2id.values():
+            label_data[data_3[i][2]] = label_data[data_3[i][2]] + 1
+    print("Updated label_data", label_data)
+    return data_3,data_2, category_value2id
 
 def json_to_fake_spacy(data: Dict, id2text: Dict) -> Iterable:
     """Creates a generator of fake spacy documents, used for running

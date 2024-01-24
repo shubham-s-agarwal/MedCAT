@@ -6,6 +6,7 @@ from torch.nn import CrossEntropyLoss
 from transformers import BertPreTrainedModel, BertModel, BertConfig
 from transformers.modeling_outputs import TokenClassifierOutput
 from medcat.meta_cat import ConfigMetaCAT
+from pytorch_model_summary import summary
 
 from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer,BertForSequenceClassification
 
@@ -160,9 +161,9 @@ class BertForMetaAnnotation(nn.Module):
 
         _bertconfig = BertConfig(num_hidden_layers=config.model['num_layers'])
 
-        bert = BertForSequenceClassification.from_pretrained(
-            "bert-base-uncased", num_labels= config.model["nclasses"]
-        )
+        # bert = BertForSequenceClassification.from_pretrained(
+        #     "bert-base-uncased", num_labels= config.model["nclasses"])
+
         bert = BertModel.from_pretrained("bert-base-uncased", config=_bertconfig)
 
         self.bert = bert
@@ -260,4 +261,52 @@ class BertForMetaAnnotation(nn.Module):
         x = self.fc4(x)
         # apply softmax activation
         # x = self.softmax(x)
+
         return x
+
+
+class BertForMetaAnnotation_two_phase(nn.Module):
+    def __init__(self,config, BertForMetaAnnotation):
+        super(BertForMetaAnnotation_two_phase, self).__init__()
+
+        # Clone Model A
+        self.modelA = BertForMetaAnnotation
+        # self.modelA.eval()  # Make sure BERT is in evaluation mode to freeze its weights
+
+        self.num_labels = config.model["nclasses"]
+
+        for param in self.modelA.parameters():
+            param.requires_grad = False
+
+        print("Model A Summary")
+        # Get all of the model's parameters as a list of tuples.
+        params = list(self.modelA.named_parameters())
+
+        print("num of params from modelA",sum(p.numel() for p in self.modelA.parameters() if p.requires_grad))
+        # Add new FC layers
+        self.new_fc1 = nn.Linear(self.num_labels, self.num_labels)
+        self.relu = nn.ReLU()
+        # self.new_fc2 = nn.Linear(config.model.hidden_size, self.num_labels)
+
+    def forward(self, input_ids,
+                attention_mask: Optional[torch.FloatTensor] = None,
+        token_type_ids: Optional[torch.LongTensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        head_mask: Optional[torch.FloatTensor] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        labels: Optional[torch.LongTensor] = None,
+        center_positions: Optional[Any] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+        model_arch_config=None):
+        # Use the pre-computed BERT features from Model A
+        # with torch.no_grad():
+        #     bert_output = self.modelA.bert(input_ids, attention_mask=attention_mask)
+        # pooled_output = bert_output.pooler_output
+        x = self.modelA(input_ids=input_ids,center_positions=center_positions)
+        x = self.relu(x)
+        x = self.new_fc1(x)
+        # x = self.new_fc2(x)
+        return x
+
