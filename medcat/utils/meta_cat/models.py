@@ -6,7 +6,6 @@ from torch.nn import CrossEntropyLoss
 from transformers import BertPreTrainedModel, BertModel, BertConfig
 from transformers.modeling_outputs import TokenClassifierOutput
 from medcat.meta_cat import ConfigMetaCAT
-from pytorch_model_summary import summary
 
 from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer,BertForSequenceClassification
 
