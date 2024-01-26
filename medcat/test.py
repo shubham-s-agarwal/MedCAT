@@ -12,7 +12,7 @@ tokenizer_ = 'bbpe'
 model_ = 'bert'
 tokenizer_ = 'bert-tokenizer'
 
-load_model_dict_ = True
+load_model_dict_ = False
 fine_tune_two_phase = False
 
 data = json.load(open('./Data/MedCAT_Export.json'))
@@ -23,6 +23,7 @@ mc_config['model']['model_name'] = model_
 mc_config['model']['model_variant'] = 'bert-base-uncased'
 mc_config['model']['load_model_dict_'] = load_model_dict_
 mc_config['model']['fine_tune_two_phase'] = fine_tune_two_phase
+mc_config['model']['category_undersample'] = 'Confirmed'
 
 json.dump(mc_config, open("./Data/status/config.json", 'w'))
 
@@ -34,6 +35,7 @@ mc.config.model['input_size'] = 768
 mc.config.model['hidden_size'] = 18
 mc.config.general.cntx_left = 20
 mc.config.general.cntx_right = 10
+
 
 mc.config.general['tokenizer_name'] = tokenizer_
 mc.config.train['nepochs'] = 40
@@ -49,6 +51,8 @@ mc.config.train.metric['base'] = 'macro avg'
 mc.config.model.model_freeze_layers = False
 mc_config['model']['model_variant'] = 'bert-base-uncased'
 mc_config['model']['load_model_dict_'] = load_model_dict_
+
+mc_config['model']['category_undersample'] = 'Confirmed'
 
 mc_config['model']['fine_tune_two_phase'] = fine_tune_two_phase
 

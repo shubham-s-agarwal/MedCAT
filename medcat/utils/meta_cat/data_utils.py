@@ -107,7 +107,7 @@ def prepare_from_json(data: Dict,
     return out_data
 
 
-def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict] = None) -> Tuple:
+def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict] = None,category_undersample=None) -> Tuple:
     """Converts the category values in the data outputed by `prepare_from_json`
     into integere values.
 
@@ -173,8 +173,14 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
             data[i][2] = category_value2id[data[i][2]]
             data_2.append(data[i])
 
+    if category_undersample is None:
+        min_lab_data = min(label_data.values())
 
-    min_lab_data = min(label_data.values())
+    else:
+        min_lab_data = label_data[category_undersample]
+
+    print("min_lab_data",min_lab_data)
+
     data_3 = []
     label_data_counter = {v: 0 for v in category_value2id.values()}
 
