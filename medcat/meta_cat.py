@@ -16,6 +16,7 @@ from medcat.pipeline.pipe_runner import PipeRunner
 from medcat.tokenizers_med.meta_cat_tokenizers import TokenizerWrapperBase
 from medcat.utils.meta_cat.data_utils import Doc as FakeDoc
 from medcat.utils.decorators import deprecated
+from peft import get_peft_config, get_peft_model, get_peft_model_state_dict, LoraConfig, TaskType
 
 # It should be safe to do this always, as all other multiprocessing
 # will be finished before data comes to meta_cat
@@ -95,8 +96,13 @@ class MetaCAT(PipeRunner):
         else:
             from medcat.utils.meta_cat.models import BertForMetaAnnotation
             model = BertForMetaAnnotation(config,model_arch_config)
+            peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=16, lora_alpha=32,
+                                     target_modules=["query","value"],lora_dropout=0.2)
+            model = get_peft_model(model, peft_config)
+            print(print("num of params from model",sum(p.numel() for p in model.parameters() if p.requires_grad)))
             print("****************Bert Model used for Classification****************")
             print("****************Bert Model successfully loaded****************")
+            model.print_trainable_parameters()
             #raise ValueError("Unknown model name %s" % config.model['model_name'])
 
         return model
@@ -247,7 +253,7 @@ class MetaCAT(PipeRunner):
                 self.model = self.get_model(embeddings=self.embeddings, _model=self.model, model_arch_config=model_arch_config,load_two_phase=self.config.model.fine_tune_two_phase)
 
         print("\nModel successfully retrieved!")
-
+        # data = full_data
         print(f"Model sent for training with {len(data)} data samples!")
         report = train_model(self.model, data=data, config=self.config, save_dir_path=save_dir_path,model_arch_config=model_arch_config)
 

@@ -12,8 +12,9 @@ tokenizer_ = 'bbpe'
 model_ = 'bert'
 tokenizer_ = 'bert-tokenizer'
 
-load_model_dict_ = False
+load_model_dict_ = True
 fine_tune_two_phase = False
+category_undersample = 'Other'
 
 data = json.load(open('./Data/MedCAT_Export.json'))
 mc_config = json.load(open('./Data/status/config.json'))
@@ -23,7 +24,7 @@ mc_config['model']['model_name'] = model_
 mc_config['model']['model_variant'] = 'bert-base-uncased'
 mc_config['model']['load_model_dict_'] = load_model_dict_
 mc_config['model']['fine_tune_two_phase'] = fine_tune_two_phase
-mc_config['model']['category_undersample'] = 'Confirmed'
+mc_config['model']['category_undersample'] = category_undersample
 
 json.dump(mc_config, open("./Data/status/config.json", 'w'))
 
@@ -36,14 +37,13 @@ mc.config.model['hidden_size'] = 18
 mc.config.general.cntx_left = 20
 mc.config.general.cntx_right = 10
 
-
 mc.config.general['tokenizer_name'] = tokenizer_
 mc.config.train['nepochs'] = 40
 mc.config.train['auto_save_model'] = True
 mc.config.train.batch_size = 32
 mc.config.model.model_name = model_
 mc.config.model["nclasses"] = 2
-mc.config.model['dropout'] = 0.45
+mc.config.model['dropout'] = 0.3
 mc.config.train.lr = 5e-4
 mc.config.train.gamma = 3
 mc.config.train.class_weights = [0.5, 0.5]
@@ -52,11 +52,11 @@ mc.config.model.model_freeze_layers = False
 mc_config['model']['model_variant'] = 'bert-base-uncased'
 mc_config['model']['load_model_dict_'] = load_model_dict_
 
-mc_config['model']['category_undersample'] = 'Confirmed'
+mc_config['model']['category_undersample'] = category_undersample
 
 mc_config['model']['fine_tune_two_phase'] = fine_tune_two_phase
 
-mc.config.model['num_layers'] = 1
+mc.config.model['num_layers'] = 3
 mc.config.general[ "category_value2id"] = {"Confirmed": 0,"Other": 1}
 
 mc.config.train['loss_function'] = 'cross_entropy'

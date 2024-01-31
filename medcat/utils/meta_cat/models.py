@@ -6,6 +6,7 @@ from torch.nn import CrossEntropyLoss
 from transformers import BertPreTrainedModel, BertModel, BertConfig
 from transformers.modeling_outputs import TokenClassifierOutput
 from medcat.meta_cat import ConfigMetaCAT
+from peft import get_peft_config, get_peft_model, get_peft_model_state_dict, LoraConfig, TaskType
 
 from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer,BertForSequenceClassification
 
@@ -164,14 +165,14 @@ class BertForMetaAnnotation(nn.Module):
         #     "bert-base-uncased", num_labels= config.model["nclasses"])
 
         bert = BertModel.from_pretrained("bert-base-uncased", config=_bertconfig)
-
+        self.config = config
+        self.config.use_return_dict = False
         self.bert = bert
         self.num_labels = config.model["nclasses"]
         print("Nclasses:",self.num_labels)
         print("Architecture config received",model_arch_config)
         for param in self.bert.parameters():
             param.requires_grad = not(config.model.model_freeze_layers)
-
         hidden_size_2 = int(config.model.hidden_size/2)
         # dropout layer
         self.dropout = nn.Dropout(config.model.dropout)

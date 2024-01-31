@@ -237,7 +237,8 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
         # Create the optimizer
         optimizer = AdamW(bert_classifier.parameters(),
                           lr=lr,  # Default learning rate
-                          eps=1e-8  # Default epsilon value
+                          eps=1e-8, # Default epsilon value
+                          weight_decay = 1e-5
                           )
 
         # Total number of training steps
@@ -258,7 +259,7 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
     ignore_cpos = config.model['ignore_cpos']
     num_batches = math.ceil(len(train_data) / batch_size)
     num_batches_test = math.ceil(len(test_data) / batch_size_eval)
-    optimizer = optim.Adam(parameters, lr=config.train['lr'])
+    optimizer = optim.Adam(parameters, lr=config.train['lr'],weight_decay = 1e-5)
     if model_arch_config is not None:
         if model_arch_config['lr_scheduler'] is True:
             model, optimizer, scheduler = initialize_model(model,train_data,batch_size,config.train['lr'],epochs=nepochs)
