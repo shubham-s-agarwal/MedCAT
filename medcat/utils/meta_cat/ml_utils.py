@@ -61,7 +61,9 @@ def create_batch_piped_data(data: List, start_ind: int, end_ind: int, device: to
     x = torch.tensor(x, dtype=torch.long).to(device)
     cpos = torch.tensor(cpos, dtype=torch.long).to(device)
 
-    return x, cpos, y
+    attention_masks = (x != 0).type(torch.int)
+
+    return x, cpos,attention_masks,y
 
 
 def predict(model: nn.Module, data: List, config: ConfigMetaCAT) -> Tuple:
@@ -93,8 +95,8 @@ def predict(model: nn.Module, data: List, config: ConfigMetaCAT) -> Tuple:
 
     with torch.no_grad():
         for i in range(num_batches):
-            x, cpos, _ = create_batch_piped_data(data, i*batch_size, (i+1)*batch_size, device=device, pad_id=pad_id)
-            logits = model(x, cpos, ignore_cpos=ignore_cpos)
+            x, cpos,attention_masks, _ = create_batch_piped_data(data, i*batch_size, (i+1)*batch_size, device=device, pad_id=pad_id)
+            logits = model(x, cpos,attention_mask=attention_masks, ignore_cpos=ignore_cpos)
             all_logits.append(logits.detach().cpu().numpy())
 
     predictions = []
@@ -276,8 +278,8 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
         all_logits = []
         model.train()
         for i in range(num_batches):
-            x, cpos, y = create_batch_piped_data(train_data, i*batch_size, (i+1)*batch_size, device=device, pad_id=pad_id)
-            logits = model(x, center_positions=cpos,model_arch_config=model_arch_config)
+            x, cpos,attention_masks, y = create_batch_piped_data(train_data, i*batch_size, (i+1)*batch_size, device=device, pad_id=pad_id)
+            logits = model(x, attention_mask = attention_masks, center_positions=cpos,model_arch_config=model_arch_config)
             # print("Y",y)
             loss = criterion(logits, y)
 
@@ -301,9 +303,9 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
 
         with torch.no_grad():
             for i in range(num_batches_test):
-                x, cpos, y = create_batch_piped_data(test_data, i*batch_size_eval, (i+1)*batch_size_eval, device=device, pad_id=pad_id)
+                x, cpos,attention_masks, y = create_batch_piped_data(test_data, i*batch_size_eval, (i+1)*batch_size_eval, device=device, pad_id=pad_id)
 
-                logits = model(x, center_positions=cpos,model_arch_config=model_arch_config)
+                logits = model(x, attention_mask = attention_masks, center_positions=cpos,model_arch_config=model_arch_config)
 
                 # Track loss and logits
                 running_loss_test.append(loss.item())
@@ -365,7 +367,7 @@ def eval_model(model: nn.Module, data: List, config: ConfigMetaCAT, tokenizer: T
 
     with torch.no_grad():
         for i in range(num_batches):
-            x, cpos, y = create_batch_piped_data(data, i*batch_size_eval, (i+1)*batch_size_eval, device=device, pad_id=pad_id)
+            x, cpos,attention_masks, y = create_batch_piped_data(data, i*batch_size_eval, (i+1)*batch_size_eval, device=device, pad_id=pad_id)
             logits = model(x, cpos, ignore_cpos=ignore_cpos)
             loss = criterion(logits, y)
 

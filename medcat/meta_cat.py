@@ -97,7 +97,14 @@ class MetaCAT(PipeRunner):
             from medcat.utils.meta_cat.models import BertForMetaAnnotation
             model = BertForMetaAnnotation(config,model_arch_config)
             peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=16, lora_alpha=32,
-                                     target_modules=["query","value"],lora_dropout=0.2)
+                                     target_modules=["query","value"],lora_dropout=0.3)
+
+            peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=32, lora_alpha=64,
+                                     target_modules=["query", "value"], lora_dropout=0.3)
+
+            # peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=8, lora_alpha=16,
+            #                          target_modules=["query", "value"], lora_dropout=0.2)
+
             model = get_peft_model(model, peft_config)
             print(print("num of params from model",sum(p.numel() for p in model.parameters() if p.requires_grad)))
             print("****************Bert Model used for Classification****************")
@@ -118,7 +125,7 @@ class MetaCAT(PipeRunner):
         return hasher.hexdigest()
 
     @deprecated(message="Use `train_from_json` or `train_raw` instead")
-    def train(self, json_path: Union[str, list], model_arch_config=None , save_dir_path: Optional[str] = None,return_data=False) -> Dict:
+    def train(self, json_path: Union[str, list], model_arch_config=None , save_dir_path: Optional[str] = None,return_data=False,data_=None) -> Dict:
         """Train or continue training a model give a json_path containing a MedCATtrainer export. It will
         continue training if an existing model is loaded or start new training if the model is blank/new.
 
@@ -129,9 +136,9 @@ class MetaCAT(PipeRunner):
                 In case we have aut_save_model (meaning during the training the best model will be saved)
                 we need to set a save path. Defaults to `None`.
         """
-        return self.train_from_json(json_path,model_arch_config, save_dir_path,return_data=return_data)
+        return self.train_from_json(json_path,model_arch_config, save_dir_path,return_data=return_data,data_=data_)
 
-    def train_from_json(self, json_path: Union[str, list],model_arch_config = None,  save_dir_path: Optional[str] = None,return_data=False) -> Dict:
+    def train_from_json(self, json_path: Union[str, list],model_arch_config = None,  save_dir_path: Optional[str] = None,return_data=False,data_=None) -> Dict:
         """Train or continue training a model give a json_path containing a MedCATtrainer export. It will
         continue training if an existing model is loaded or start new training if the model is blank/new.
 
@@ -162,9 +169,9 @@ class MetaCAT(PipeRunner):
         for path in json_path:
             with open(path, 'r') as f:
                 data_loaded = merge_data_loaded(data_loaded, json.load(f))
-        return self.train_raw(data_loaded, model_arch_config,save_dir_path,return_data=return_data)
+        return self.train_raw(data_loaded, model_arch_config,save_dir_path,return_data=return_data,data_=data_)
 
-    def train_raw(self, data_loaded: Dict, model_arch_config=None, save_dir_path: Optional[str] = None,return_data=False) -> Dict:
+    def train_raw(self, data_loaded: Dict, model_arch_config=None, save_dir_path: Optional[str] = None,return_data=False,data_=None) -> Dict:
         """Train or continue training a model given raw data. It will
         continue training if an existing model is loaded or start new training if the model is blank/new.
 
@@ -240,6 +247,27 @@ class MetaCAT(PipeRunner):
         if return_data:
             return full_data
 
+        if data_:
+            data_sampled = []
+            for sample in data_:
+                if isinstance(sample[0][0],str):
+                    # print("SAMPLE",sample)
+                    doc_text = self.tokenizer(sample[0])
+                    data_sampled.append([doc_text[0]['input_ids'],sample[1],sample[2]])
+                else:
+                    data_sampled.append([sample[0], sample[1], sample[2]])
+
+            label_data = {0:0,1:0}
+            for i in range(len(data_sampled)):
+                # print('\n\nSAMPLE IN DATA',data_sampled[i])
+
+                label_data[data_sampled[i][2]] = label_data[data_sampled[i][2]] + 1
+            print("label_data after", label_data)
+
+            data, full_data, _ = encode_category_values(data_sampled, existing_category_value2id={0:0,1:1},
+                                                        category_undersample=1)
+                                                        # category_undersample=self.config.model.category_undersample)
+
         self.model = self.get_model(embeddings=self.embeddings,model_arch_config=model_arch_config)
         # self.config.model.load_model_dict_ = True
         if self.config.model.load_model_dict_:
@@ -252,6 +280,7 @@ class MetaCAT(PipeRunner):
             if self.config.model.fine_tune_two_phase:
                 self.model = self.get_model(embeddings=self.embeddings, _model=self.model, model_arch_config=model_arch_config,load_two_phase=self.config.model.fine_tune_two_phase)
 
+        # data = full_data
         print("\nModel successfully retrieved!")
         # data = full_data
         print(f"Model sent for training with {len(data)} data samples!")
@@ -376,6 +405,7 @@ class MetaCAT(PipeRunner):
             from medcat.tokenizers_med.meta_cat_tokenizers import TokenizerWrapperBPE
             tokenizer = TokenizerWrapperBPE.load(save_dir_path)
         elif config.general['tokenizer_name'] == 'bert-tokenizer':
+            print("Loading Bert Tokenizer has been called")
             from medcat.tokenizers_med.meta_cat_tokenizers import TokenizerWrapperBERT
             # config.model['model_variant'] = 'bert-base-uncased'
             tokenizer = TokenizerWrapperBERT.load(save_dir_path,config.model['model_variant'])

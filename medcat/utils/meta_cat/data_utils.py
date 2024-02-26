@@ -106,7 +106,6 @@ def prepare_from_json(data: Dict,
                                     out_data[name] = [sample]
     return out_data
 
-
 def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict] = None,category_undersample=None) -> Tuple:
     """Converts the category values in the data outputed by `prepare_from_json`
     into integere values.
