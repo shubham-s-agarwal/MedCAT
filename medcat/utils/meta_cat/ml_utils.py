@@ -321,8 +321,11 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
 
             report = classification_report(y_test, np.argmax(np.concatenate(all_logits_test, axis=0), axis=1), output_dict=True)
             cm = confusion_matrix(y_test, np.argmax(np.concatenate(all_logits_test, axis=0), axis=1),normalize='true')
+            report_train = classification_report(y_train, np.argmax(np.concatenate(all_logits, axis=0), axis=1), output_dict=True)
+
             winner_report['confusion_matrix'] = cm
             winner_report['report'] = report
+            winner_report['report_train'] = report_train
             winner_report['epoch'] = epoch
 
             # Save if needed
