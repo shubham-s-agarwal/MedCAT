@@ -173,6 +173,7 @@ class BertForMetaAnnotation(nn.Module):
         print("Architecture config received",model_arch_config)
         for param in self.bert.parameters():
             param.requires_grad = not(config.model.model_freeze_layers)
+
         hidden_size_2 = int(config.model.hidden_size/2)
         # dropout layer
         self.dropout = nn.Dropout(config.model.dropout)
@@ -305,6 +306,7 @@ class BertForMetaAnnotation_two_phase(nn.Module):
         #     bert_output = self.modelA.bert(input_ids, attention_mask=attention_mask)
         # pooled_output = bert_output.pooler_output
         x = self.modelA(input_ids=input_ids,center_positions=center_positions)
+
         x = self.relu(x)
         x = self.new_fc1(x)
         # x = self.new_fc2(x)

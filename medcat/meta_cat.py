@@ -96,20 +96,27 @@ class MetaCAT(PipeRunner):
         else:
             from medcat.utils.meta_cat.models import BertForMetaAnnotation
             model = BertForMetaAnnotation(config,model_arch_config)
-            peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=16, lora_alpha=32,
-                                     target_modules=["query","value"],lora_dropout=0.3)
 
-            peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=32, lora_alpha=64,
-                                     target_modules=["query", "value"], lora_dropout=0.3)
+            if not config['model']['fine_tune_two_phase']:
+                peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=16, lora_alpha=32,
+                                         target_modules=["query","value"],lora_dropout=0.3)
 
-            # peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=8, lora_alpha=16,
-            #                          target_modules=["query", "value"], lora_dropout=0.2)
+                peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=32, lora_alpha=64,
+                                         target_modules=["query", "value"], lora_dropout=0.3)
 
-            model = get_peft_model(model, peft_config)
-            print(print("num of params from model",sum(p.numel() for p in model.parameters() if p.requires_grad)))
+                peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=64, lora_alpha=128,
+                                         target_modules=["query", "value"], lora_dropout=0.3)
+
+                peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=8, lora_alpha=16,
+                                         target_modules=["query", "value"], lora_dropout=0.2)
+
+                model = get_peft_model(model, peft_config)
+                model.print_trainable_parameters()
+                print("PEFT configured!")
+
             print("****************Bert Model used for Classification****************")
             print("****************Bert Model successfully loaded****************")
-            model.print_trainable_parameters()
+            print(print("num of params from model", sum(p.numel() for p in model.parameters() if p.requires_grad)))
             #raise ValueError("Unknown model name %s" % config.model['model_name'])
 
         return model
@@ -269,6 +276,7 @@ class MetaCAT(PipeRunner):
                                                         # category_undersample=self.config.model.category_undersample)
 
         self.model = self.get_model(embeddings=self.embeddings,model_arch_config=model_arch_config)
+
         # self.config.model.load_model_dict_ = True
         if self.config.model.load_model_dict_:
             model_save_path = os.path.join(save_dir_path, 'model.dat')
@@ -276,12 +284,13 @@ class MetaCAT(PipeRunner):
             self.model.load_state_dict(state_dict_)
             print("Model state loaded from dict!")
             data = full_data
-        print("TRAIN ON FULL DATA",self.config.model.train_on_full_data)
-        if self.config.model.train_on_full_data:
-            data = full_data
 
             if self.config.model.fine_tune_two_phase:
                 self.model = self.get_model(embeddings=self.embeddings, _model=self.model, model_arch_config=model_arch_config,load_two_phase=self.config.model.fine_tune_two_phase)
+
+        print("TRAIN ON FULL DATA", self.config.model.train_on_full_data)
+        if self.config.model.train_on_full_data:
+            data = full_data
 
         # data = full_data
         print("\nModel successfully retrieved!")

@@ -206,7 +206,7 @@ def train_model(model: nn.Module, data: List, config: ConfigMetaCAT, save_dir_pa
     device = torch.device(config.general['device']) # Create a torch device
 
     class_weights = config.train['class_weights']
-
+    print("WEIGHTS:",class_weights)
     if class_weights is not None:
         class_weights = torch.FloatTensor(class_weights).to(device)
         if config.train['loss_funct'] == 'cross_entropy':

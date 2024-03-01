@@ -138,9 +138,11 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
     # Ensuring that each label has data and checking for class imbalance
 
     label_data = {key: 0 for key in category_value2id}
+    label_data_2 = {}
     for i in range(len(data)):
         # print("data[i][2]",data[i][2])
         # print("category_values2id", category_value2id)
+
         if data[i][2] in category_value2id:
             label_data[data[i][2]] = label_data[data[i][2]] + 1
     print("label_data",label_data)
@@ -165,12 +167,21 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
 
         print(f"Labels found with 0 data; updates made\nFinal label encoding mapping:",category_value2id_)
         category_value2id = category_value2id_
+
     # Map values to numbers
     data_2 = []
     for i in range(len(data)):
         if data[i][2] in category_value2id:
             data[i][2] = category_value2id[data[i][2]]
             data_2.append(data[i])
+
+    label_data_ = {v: 0 for v in category_value2id.values()}
+    for i in range(len(data_2)):
+        # print("data[i][2]",data_3[i][2])
+        # print("category_values2id", category_value2id)
+        if data_2[i][2] in category_value2id.values():
+            label_data_[data_2[i][2]] = label_data_[data_2[i][2]] + 1
+    print("Encoded label_data", label_data_)
 
     if category_undersample is None:
         min_lab_data = min(label_data.values())
