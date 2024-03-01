@@ -276,6 +276,9 @@ class MetaCAT(PipeRunner):
             self.model.load_state_dict(state_dict_)
             print("Model state loaded from dict!")
             data = full_data
+        print("TRAIN ON FULL DATA",self.config.model.train_on_full_data)
+        if self.config.model.train_on_full_data:
+            data = full_data
 
             if self.config.model.fine_tune_two_phase:
                 self.model = self.get_model(embeddings=self.embeddings, _model=self.model, model_arch_config=model_arch_config,load_two_phase=self.config.model.fine_tune_two_phase)

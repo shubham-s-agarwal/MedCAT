@@ -55,6 +55,7 @@ class Model(MixingConfig, BaseModel):
     dropout: float = 0.5
     load_model_dict_ = True
     fine_tune_two_phase = False
+    train_on_full_data = False
     category_undersample : str = None
     num_directions: int = 2
     """2 - bidirectional model, 1 - unidirectional"""
