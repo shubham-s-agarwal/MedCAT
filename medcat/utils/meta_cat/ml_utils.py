@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from medcat.config_meta_cat import ConfigMetaCAT
 from medcat.tokenizers_med.meta_cat_tokenizers import TokenizerWrapperBase
 from sklearn.metrics import classification_report, precision_recall_fscore_support,f1_score, confusion_matrix, accuracy_score,ConfusionMatrixDisplay
+from sklearn.model_selection import train_test_split
 from transformers import AdamW, get_linear_schedule_with_warmup
 from sklearn.utils import class_weight
 # from medcat.utils.meta_cat.meta_cat_loss import DiceLoss,FocalLoss
@@ -112,7 +113,7 @@ def predict(model: nn.Module, data: List, config: ConfigMetaCAT) -> Tuple:
 
 
 def split_list_train_test(data: List, test_size: int, shuffle: bool = True) -> Tuple:
-    """Shuffle and randomply split data
+    """Shuffle and randomly split data
 
     Args:
         data
@@ -122,9 +123,23 @@ def split_list_train_test(data: List, test_size: int, shuffle: bool = True) -> T
     if shuffle:
         random.shuffle(data)
 
-    test_ind = int(len(data) * test_size)
-    test_data = data[:test_ind]
-    train_data = data[test_ind:]
+    print("This is the data",data)
+
+    X_features = [x[:-1] for x in data]
+    print("X_features", X_features)
+    y_labels = [x[-1] for x in data]
+
+    X_train, X_test, y_train, y_test = train_test_split(X_features, y_labels, test_size=test_size, stratify=y_labels,
+                                                        random_state=42)
+
+    train_data = [x + [y] for x,y in zip(X_train, y_train)]
+    test_data = [x + [y] for x, y in zip(X_test, y_test)]
+
+    print("train_data", train_data)
+
+    # test_ind = int(len(data) * test_size)
+    # test_data = data[:test_ind]
+    # train_data = data[test_ind:]
 
     return train_data, test_data
 

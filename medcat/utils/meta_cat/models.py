@@ -221,12 +221,19 @@ class BertForMetaAnnotation(nn.Module):
             input_ids,
             attention_mask=attention_mask,output_hidden_states=True
         )
+
         # print("outputs last hidden state",outputs.last_hidden_state.shape)
 
         # row_indices = torch.arange(0, outputs.hidden_states[0].size(0)).long()
         row_indices = torch.arange(0, outputs.last_hidden_state.size(0)).long()
 
         x = outputs.last_hidden_state[row_indices, center_positions, :]
+        pooled_output = outputs[1]
+
+        # print("X.shape",x.shape)
+        # print("POOLED OUTPUT",pooled_output.shape)
+
+        x= torch.cat((x,pooled_output),dim=1)
 
         # x = outputs.hidden_states[0][:, 0, :]  # To retrieve the [CLS] token that holds all learned context from BERT
         # x = outputs.last_hidden_state[:, 0, :]
@@ -267,23 +274,24 @@ class BertForMetaAnnotation(nn.Module):
 
 
 class BertForMetaAnnotation_two_phase(nn.Module):
-    def __init__(self,config, BertForMetaAnnotation):
+    def __init__(self,config, model_first):
         super(BertForMetaAnnotation_two_phase, self).__init__()
 
         # Clone Model A
-        self.modelA = BertForMetaAnnotation
+        self.modelA = model_first
+        self.config = config
         # self.modelA.eval()  # Make sure BERT is in evaluation mode to freeze its weights
 
         self.num_labels = config.model["nclasses"]
 
-        for param in self.modelA.parameters():
-            param.requires_grad = False
+        # for param in self.modelA.parameters():
+        #     param.requires_grad = False
 
-        print("Model A Summary")
+        # print("Model A Summary")
         # Get all of the model's parameters as a list of tuples.
-        params = list(self.modelA.named_parameters())
+        # params = list(self.modelA.named_parameters())
 
-        print("num of params from modelA",sum(p.numel() for p in self.modelA.parameters() if p.requires_grad))
+        # print("num of params from modelA",sum(p.numel() for p in self.modelA.parameters() if p.requires_grad))
         # Add new FC layers
         self.new_fc1 = nn.Linear(self.num_labels, self.num_labels)
         self.relu = nn.ReLU()

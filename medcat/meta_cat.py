@@ -97,22 +97,22 @@ class MetaCAT(PipeRunner):
             from medcat.utils.meta_cat.models import BertForMetaAnnotation
             model = BertForMetaAnnotation(config,model_arch_config)
 
-            if not config['model']['fine_tune_two_phase']:
-                peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=16, lora_alpha=32,
-                                         target_modules=["query","value"],lora_dropout=0.3)
+            # if not config['model']['fine_tune_two_phase']:
+            peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=16, lora_alpha=32,
+                                     target_modules=["query","value"],lora_dropout=0.3)
 
-                peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=32, lora_alpha=64,
-                                         target_modules=["query", "value"], lora_dropout=0.3)
+            peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=32, lora_alpha=64,
+                                     target_modules=["query", "value"], lora_dropout=0.3)
 
-                peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=64, lora_alpha=128,
-                                         target_modules=["query", "value"], lora_dropout=0.3)
+            peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=64, lora_alpha=128,
+                                     target_modules=["query", "value"], lora_dropout=0.3)
 
-                peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=8, lora_alpha=16,
-                                         target_modules=["query", "value"], lora_dropout=0.2)
+            peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=8, lora_alpha=16,
+                                     target_modules=["query", "value"], lora_dropout=0.2)
 
-                model = get_peft_model(model, peft_config)
-                model.print_trainable_parameters()
-                print("PEFT configured!")
+            model = get_peft_model(model, peft_config)
+            model.print_trainable_parameters()
+            print("PEFT configured!")
 
             print("****************Bert Model used for Classification****************")
             print("****************Bert Model successfully loaded****************")
@@ -223,7 +223,7 @@ class MetaCAT(PipeRunner):
                                  cui_filter=t_config['cui_filter'],
                                  replace_center=g_config['replace_center'], prerequisites=t_config['prerequisites'],
                                  lowercase=g_config['lowercase'])
-
+        # print(data)
         # Check is the name there
         category_name = g_config['category_name']
         if category_name not in data:
