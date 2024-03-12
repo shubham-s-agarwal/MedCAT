@@ -123,8 +123,6 @@ def split_list_train_test(data: List, test_size: int, shuffle: bool = True) -> T
     if shuffle:
         random.shuffle(data)
 
-    print("This is the data",data)
-
     X_features = [x[:-1] for x in data]
     print("X_features", X_features)
     y_labels = [x[-1] for x in data]
@@ -134,8 +132,6 @@ def split_list_train_test(data: List, test_size: int, shuffle: bool = True) -> T
 
     train_data = [x + [y] for x,y in zip(X_train, y_train)]
     test_data = [x + [y] for x, y in zip(X_test, y_test)]
-
-    print("train_data", train_data)
 
     # test_ind = int(len(data) * test_size)
     # test_data = data[:test_ind]
