@@ -124,7 +124,6 @@ def split_list_train_test(data: List, test_size: int, shuffle: bool = True) -> T
         random.shuffle(data)
 
     X_features = [x[:-1] for x in data]
-    print("X_features", X_features)
     y_labels = [x[-1] for x in data]
 
     X_train, X_test, y_train, y_test = train_test_split(X_features, y_labels, test_size=test_size, stratify=y_labels,
