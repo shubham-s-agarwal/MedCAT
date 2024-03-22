@@ -121,11 +121,9 @@ def prepare_from_json(data: Dict,
                             cpos = cntx_left + min(0, ind - cntx_left)
                             cpos_new = [ x - _start for x in ctoken_idx]
 
-
-
                             if any(elem < 0 for elem in cpos_new) and cnt_print==0:
                                 print("negative found",cpos_new)
-                                print(start,end,ctoken_idx)
+                                print(_start,ctoken_idx)
 
                                 for ind, pair in enumerate(doc_text['offset_mapping']):
                                     print(ind,"-->",start,end,"    ",pair[0],pair[1])
