@@ -226,8 +226,17 @@ class BertForMetaAnnotation(nn.Module):
 
         # row_indices = torch.arange(0, outputs.hidden_states[0].size(0)).long()
         row_indices = torch.arange(0, outputs.last_hidden_state.size(0)).long()
+        x_all = []
+        for i,indices in enumerate(center_positions):
 
-        x = outputs.last_hidden_state[row_indices, center_positions, :]
+            this_hidden = outputs.last_hidden_state[i, indices, :]
+            to_append, _ = torch.max(this_hidden, axis=0)
+            x_all.append(to_append)
+
+        x = torch.stack(x_all)
+
+        # x = outputs.last_hidden_state[row_indices, 20, :]  Changing to retrieving for all tokens of cpos
+
         pooled_output = outputs[1]
 
         # print("X.shape",x.shape)

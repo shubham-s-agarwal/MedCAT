@@ -48,24 +48,43 @@ def prepare_from_json(data: Dict,
 
                 doc_text = tokenizer(text)
 
-                for ann in document.get('annotations', document.get('entities', {}).values()): # A hack to suport entities and annotations
+                for ann in document.get('annotations', document.get('entities',
+                                                                    {}).values()):  # A hack to suport entities and annotations
                     cui = ann['cui']
                     skip = False
                     if 'meta_anns' in ann and prerequisites:
                         # It is possible to require certain meta_anns to exist and have a specific value
                         for meta_ann in prerequisites:
-                            if meta_ann not in ann['meta_anns'] or ann['meta_anns'][meta_ann]['value'] != prerequisites[meta_ann]:
+                            if meta_ann not in ann['meta_anns'] or ann['meta_anns'][meta_ann]['value'] != prerequisites[
+                                meta_ann]:
                                 # Skip this annotation as the prerequisite is not met
                                 skip = True
                                 break
 
                     if not skip and (cui_filter is None or not cui_filter or cui in cui_filter):
-                        if ann.get('validated', True) and (not ann.get('deleted', False) and not ann.get('killed', False)
-                                                           and not ann.get('irrelevant', False)):
+                        if ann.get('validated', True) and (
+                                not ann.get('deleted', False) and not ann.get('killed', False)
+                                and not ann.get('irrelevant', False)):
                             start = ann['start']
                             end = ann['end']
 
                             # Get the index of the center token
+                            flag = 0
+                            ctoken_idx = []
+
+                            for ind, pair in enumerate(doc_text['offset_mapping']):
+                                if start == pair[0]:
+                                    if end <= pair[1]:
+                                        ctoken_idx.append(ind)
+                                        break
+                                    else:
+                                        flag = 1
+                                if flag == 1:
+                                    if end <= pair[1]:
+                                        break
+                                    else:
+                                        ctoken_idx.append(ind)
+
                             ind = 0
                             for ind, pair in enumerate(doc_text['offset_mapping']):
                                 if start >= pair[0] and start < pair[1]:
@@ -73,8 +92,10 @@ def prepare_from_json(data: Dict,
 
                             _start = max(0, ind - cntx_left)
                             _end = min(len(doc_text['input_ids']), ind + 1 + cntx_right)
+
                             tkns = doc_text['input_ids'][_start:_end]
-                            cpos = cntx_left + min(0, ind-cntx_left)
+                            cpos = cntx_left + min(0, ind - cntx_left)
+                            cpos_new = [ x - _start for x in ctoken_idx]
 
                             if replace_center is not None:
                                 if lowercase:
@@ -86,19 +107,20 @@ def prepare_from_json(data: Dict,
                                         e_ind = p_ind
 
                                 ln = e_ind - s_ind
-                                tkns = tkns[:cpos] + tokenizer(replace_center)['input_ids'] + tkns[cpos+ln+1:]
+                                tkns = tkns[:cpos] + tokenizer(replace_center)['input_ids'] + tkns[cpos + ln + 1:]
 
                             # Backward compatibility if meta_anns is a list vs dict in the new approach
                             meta_anns = []
                             if 'meta_anns' in ann:
-                                meta_anns = ann['meta_anns'].values() if type(ann['meta_anns']) == dict else ann['meta_anns']
+                                meta_anns = ann['meta_anns'].values() if type(ann['meta_anns']) == dict else ann[
+                                    'meta_anns']
 
                             # If the annotation is validated
                             for meta_ann in meta_anns:
                                 name = meta_ann['name']
                                 value = meta_ann['value']
 
-                                sample = [tkns, cpos, value]
+                                sample = [tkns, cpos_new, value]
 
                                 if name in out_data:
                                     out_data[name].append(sample)
@@ -106,7 +128,9 @@ def prepare_from_json(data: Dict,
                                     out_data[name] = [sample]
     return out_data
 
-def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict] = None,category_undersample=None) -> Tuple:
+
+def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict] = None,
+                           category_undersample=None) -> Tuple:
     """Converts the category values in the data outputed by `prepare_from_json`
     into integere values.
 
@@ -145,7 +169,7 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
 
         if data[i][2] in category_value2id:
             label_data[data[i][2]] = label_data[data[i][2]] + 1
-    print("label_data",label_data)
+    print("label_data", label_data)
 
     # if 0 in label_data.values():
     #
@@ -165,7 +189,7 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
         for k in keys_ls:
             category_value2id_[k] = len(category_value2id_)
 
-        print(f"Labels found with 0 data; updates made\nFinal label encoding mapping:",category_value2id_)
+        print(f"Labels found with 0 data; updates made\nFinal label encoding mapping:", category_value2id_)
         category_value2id = category_value2id_
 
     # Map values to numbers
@@ -189,15 +213,15 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
     else:
         min_lab_data = label_data[category_undersample]
 
-    print("min_lab_data",min_lab_data)
+    print("min_lab_data", min_lab_data)
 
     data_3 = []
     label_data_counter = {v: 0 for v in category_value2id.values()}
 
     for sample in data_2:
-        if label_data_counter[sample[-1]]<min_lab_data:
+        if label_data_counter[sample[-1]] < min_lab_data:
             data_3.append(sample)
-            label_data_counter[sample[-1]]+=1
+            label_data_counter[sample[-1]] += 1
 
     label_data = {v: 0 for v in category_value2id.values()}
     for i in range(len(data_3)):
@@ -206,7 +230,8 @@ def encode_category_values(data: Dict, existing_category_value2id: Optional[Dict
         if data_3[i][2] in category_value2id.values():
             label_data[data_3[i][2]] = label_data[data_3[i][2]] + 1
     print("Updated label_data", label_data)
-    return data_3,data_2, category_value2id
+    return data_3, data_2, category_value2id
+
 
 def json_to_fake_spacy(data: Dict, id2text: Dict) -> Iterable:
     """Creates a generator of fake spacy documents, used for running
@@ -242,7 +267,7 @@ class Span(object):
         self.start_char = start_char
         self.end_char = end_char
         self._.id = id_  # type: ignore
-        self._.meta_anns = None # type: ignore
+        self._.meta_anns = None  # type: ignore
 
 
 class Doc(object):

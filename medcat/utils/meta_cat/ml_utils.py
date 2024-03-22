@@ -60,7 +60,8 @@ def create_batch_piped_data(data: List, start_ind: int, end_ind: int, device: to
         y = torch.tensor([x[2] for x in data[start_ind:end_ind]], dtype=torch.long).to(device)
 
     x = torch.tensor(x, dtype=torch.long).to(device)
-    cpos = torch.tensor(cpos, dtype=torch.long).to(device)
+
+    # cpos = torch.tensor(cpos, dtype=torch.long).to(device)
 
     attention_masks = (x != 0).type(torch.int)
 

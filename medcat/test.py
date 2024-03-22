@@ -14,7 +14,7 @@ tokenizer_ = 'bert-tokenizer'
 load_model_dict_ = False
 fine_tune_two_phase = False
 category_undersample = 'Other'
-train_on_full_data = False
+train_on_full_data = True
 
 data = json.load(open('./Data/MedCAT_Export.json'))
 mc_config = json.load(open('./Data/status/config.json'))
@@ -42,7 +42,7 @@ mc.config.general.cntx_left = 20
 mc.config.general.cntx_right = 10
 
 mc.config.general['tokenizer_name'] = tokenizer_
-mc.config.train['nepochs'] = 70
+mc.config.train['nepochs'] = 40
 # mc.config.train['nepochs'] = 20
 mc.config.train['auto_save_model'] = False
 mc.config.train.batch_size = 64
@@ -52,7 +52,7 @@ mc.config.model['dropout'] = 0.25
 mc.config.train.lr = 5e-4
 mc.config.train.gamma = 3
 mc.config.train.class_weights = [0.15, 0.72]
-mc.config.train.class_weights = [0.5, 0.6]
+mc.config.train.class_weights = [0.25, 0.65]
 
 mc.config.train.metric['base'] = 'macro avg'
 mc.config.model.model_freeze_layers = False
