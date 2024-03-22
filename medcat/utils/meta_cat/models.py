@@ -228,7 +228,8 @@ class BertForMetaAnnotation(nn.Module):
         row_indices = torch.arange(0, outputs.last_hidden_state.size(0)).long()
         x_all = []
         for i,indices in enumerate(center_positions):
-
+            print("Printing indices",indices)
+            print("Printing input ids",input_ids[i].shape)
             this_hidden = outputs.last_hidden_state[i, indices, :]
             to_append, _ = torch.max(this_hidden, axis=0)
             x_all.append(to_append)
