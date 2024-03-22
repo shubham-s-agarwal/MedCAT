@@ -97,6 +97,11 @@ def prepare_from_json(data: Dict,
                             cpos = cntx_left + min(0, ind - cntx_left)
                             cpos_new = [ x - _start for x in ctoken_idx]
 
+                            print('These are the original values',ctoken_idx)
+                            print("Start and end",_start,_end)
+                            print("Final ones: ",cpos_new)
+
+
                             if replace_center is not None:
                                 if lowercase:
                                     replace_center = replace_center.lower()
