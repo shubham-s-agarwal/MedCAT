@@ -85,7 +85,7 @@ def prepare_from_json(data: Dict,
                                     else:
                                         ctoken_idx.append(ind)
 
-                                if len(ctoken_idx) > 8:
+                                if len(ctoken_idx) > 20:
                                     print("START AND END",pair[0], pair[1])
 
                             ind = 0
