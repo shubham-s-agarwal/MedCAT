@@ -92,6 +92,9 @@ def prepare_from_json(data: Dict,
                             for ind, pair in enumerate(doc_text['offset_mapping']):
                                 if start >= pair[0] and start < pair[1]:
                                     break
+                            if len(ctoken_idx)==0:
+                                for ind, pair in enumerate(doc_text['offset_mapping']):
+                                    print(start,end,"    ",pair[0],pair[1])
 
                             print("ctoken_idx", ctoken_idx)
                             _start = max(0, ind - cntx_left)
