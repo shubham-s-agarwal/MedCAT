@@ -73,7 +73,7 @@ def prepare_from_json(data: Dict,
                             ctoken_idx = []
 
                             for ind, pair in enumerate(doc_text['offset_mapping']):
-                                if start == pair[0] or start == pair[1]:
+                                if start <= pair[0] or start <= pair[1]:
                                     if end <= pair[1]:
                                         ctoken_idx.append(ind)
                                         break
@@ -93,6 +93,20 @@ def prepare_from_json(data: Dict,
                                 if start >= pair[0] and start < pair[1]:
                                     break
                             if len(ctoken_idx)==0:
+                                # for ind, pair in enumerate(doc_text['offset_mapping']):
+                                #     if start == pair[0] + 2 or start == pair[0] - 2 or start == pair[1] + 2 or start == pair[1] - 2:
+                                #         if end <= pair[1]:
+                                #             ctoken_idx.append(ind)
+                                #             break
+                                #         else:
+                                #             flag = 1
+                                #     if flag == 1:
+                                #         if end <= pair[1] or end <= pair[0]:
+                                #             break
+                                #         else:
+                                #             ctoken_idx.append(ind)
+                                #
+                                #
                                 print("TOKEN",text[start:end])
                                 for ind, pair in enumerate(doc_text['offset_mapping']):
                                     print(start,end,"    ",pair[0],pair[1])
