@@ -86,7 +86,7 @@ def prepare_from_json(data: Dict,
                                         ctoken_idx.append(ind)
 
                                 if all(elem in ctoken_idx for elem in [25,26,27,28,29]):
-                                    print("PRINTING",start,end)
+                                    print("PRINTING",start,end,text[start:end])
 
                             ind = 0
                             for ind, pair in enumerate(doc_text['offset_mapping']):
