@@ -114,7 +114,7 @@ def prepare_from_json(data: Dict,
                                 #     print(start,end,"    ",pair[0],pair[1])
 
 
-                            _start = max(0, ind - cntx_left)
+                            _start = max(0, ctoken_idx[0] - cntx_left)
                             _end = min(len(doc_text['input_ids']), ind + 1 + cntx_right)
 
                             cpos = cntx_left + min(0, ind - cntx_left)
