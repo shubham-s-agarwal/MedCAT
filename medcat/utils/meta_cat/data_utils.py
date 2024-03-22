@@ -85,8 +85,8 @@ def prepare_from_json(data: Dict,
                                     else:
                                         ctoken_idx.append(ind)
 
-                                if all(elem in ctoken_idx for elem in [25,26,27,28,29]):
-                                    print("PRINTING",start,end,text[start:end])
+                                # if all(elem in ctoken_idx for elem in [25,26,27,28,29]):
+                                #     print("PRINTING",start,end,text[start:end])
 
                             ind = 0
                             for ind, pair in enumerate(doc_text['offset_mapping']):
@@ -96,9 +96,12 @@ def prepare_from_json(data: Dict,
                             _start = max(0, ind - cntx_left)
                             _end = min(len(doc_text['input_ids']), ind + 1 + cntx_right)
 
-                            tkns = doc_text['input_ids'][_start:_end]
                             cpos = cntx_left + min(0, ind - cntx_left)
                             cpos_new = [ x - _start for x in ctoken_idx]
+
+                            _end = min(len(doc_text['input_ids']), cpos_new[-1] + 1 + cntx_right)
+
+                            tkns = doc_text['input_ids'][_start:_end]
 
                             if replace_center is not None:
                                 if lowercase:
