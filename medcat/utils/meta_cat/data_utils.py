@@ -93,6 +93,7 @@ def prepare_from_json(data: Dict,
                                 if start >= pair[0] and start < pair[1]:
                                     break
 
+                            print("ctoken_idx", ctoken_idx)
                             _start = max(0, ind - cntx_left)
                             _end = min(len(doc_text['input_ids']), ind + 1 + cntx_right)
 
