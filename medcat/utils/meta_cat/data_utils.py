@@ -85,6 +85,9 @@ def prepare_from_json(data: Dict,
                                     else:
                                         ctoken_idx.append(ind)
 
+                                if len(ctoken_idx) > 8:
+                                    print("START AND END",pair[0], pair[1])
+
                             ind = 0
                             for ind, pair in enumerate(doc_text['offset_mapping']):
                                 if start >= pair[0] and start < pair[1]:
@@ -96,11 +99,6 @@ def prepare_from_json(data: Dict,
                             tkns = doc_text['input_ids'][_start:_end]
                             cpos = cntx_left + min(0, ind - cntx_left)
                             cpos_new = [ x - _start for x in ctoken_idx]
-
-                            print('These are the original values',ctoken_idx)
-                            print("Start and end",_start,_end)
-                            print("Final ones: ",cpos_new)
-
 
                             if replace_center is not None:
                                 if lowercase:
