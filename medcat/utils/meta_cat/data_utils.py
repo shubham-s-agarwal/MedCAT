@@ -111,7 +111,7 @@ def prepare_from_json(data: Dict,
                                 for ind, pair in enumerate(doc_text['offset_mapping']):
                                     print(start,end,"    ",pair[0],pair[1])
 
-                            
+
                             _start = max(0, ind - cntx_left)
                             _end = min(len(doc_text['input_ids']), ind + 1 + cntx_right)
 
@@ -121,6 +121,9 @@ def prepare_from_json(data: Dict,
                             if any(elem < 0 for elem in cpos_new):
                                 print("negative found",cpos_new)
                                 print(start,end,ctoken_idx)
+
+                                for ind, pair in enumerate(doc_text['offset_mapping']):
+                                    print(ind,"-->",start,end,"    ",pair[0],pair[1])
 
                             _end = min(len(doc_text['input_ids']), ctoken_idx[-1] + 1 + cntx_right)
                             # print(_start, _end)
