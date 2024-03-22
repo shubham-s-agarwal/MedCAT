@@ -118,6 +118,10 @@ def prepare_from_json(data: Dict,
                             cpos = cntx_left + min(0, ind - cntx_left)
                             cpos_new = [ x - _start for x in ctoken_idx]
 
+                            if any(elem < 0 for elem in cpos_new):
+                                print("negative found",cpos_new)
+                                print(start,end,ctoken_idx)
+
                             _end = min(len(doc_text['input_ids']), ctoken_idx[-1] + 1 + cntx_right)
                             # print(_start, _end)
                             tkns = doc_text['input_ids'][_start:_end]
