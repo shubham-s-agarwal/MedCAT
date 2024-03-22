@@ -38,6 +38,7 @@ def prepare_from_json(data: Dict,
             Example: {'category_name': [('<category_value>', '<[tokens]>', '<center_token>'), ...], ...}
     """
     out_data: Dict = {}
+    cnt_print = 0
     for project in data['projects']:
         for document in project['documents']:
             text = str(document['text'])
@@ -120,7 +121,7 @@ def prepare_from_json(data: Dict,
                             cpos = cntx_left + min(0, ind - cntx_left)
                             cpos_new = [ x - _start for x in ctoken_idx]
 
-                            cnt_print = 0
+
 
                             if any(elem < 0 for elem in cpos_new) and cnt_print==0:
                                 print("negative found",cpos_new)
@@ -129,7 +130,7 @@ def prepare_from_json(data: Dict,
                                 for ind, pair in enumerate(doc_text['offset_mapping']):
                                     print(ind,"-->",start,end,"    ",pair[0],pair[1])
                                 cnt_print+=1
-                            
+
                             _end = min(len(doc_text['input_ids']), ctoken_idx[-1] + 1 + cntx_right)
                             # print(_start, _end)
                             tkns = doc_text['input_ids'][_start:_end]
